@@ -1,0 +1,59 @@
+/* ============================================================
+   Reaction bar — eight buttons, every phase, phone only
+   ============================================================
+   Buttons, not a keyboard. Present in the lobby and on the podium alike: the
+   thing a guest can always do is react, and taking that away between rounds is
+   what makes a party app feel dead.
+
+   The rate limit is the server's (5/sec sustained, burst of 10) and excess is
+   dropped silently. So: no error, no disabled state, no cooldown here. Mashing
+   is the point — every tap gets its local pop whether or not it made it. */
+
+.reaction-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-sm) calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.reaction-bar__button {
+  /* Overrides the global button padding — these are square targets in a row of
+     eight across 430px, so horizontal padding has to come from the grid. */
+  padding: 0;
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  line-height: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  /* No hover state: it sticks on touch devices and leaves a button looking
+     pressed for the rest of the evening. */
+  transition: transform 0.09s ease-out, background var(--transition-fast);
+}
+
+.reaction-bar__button:active {
+  transform: scale(0.86);
+  background: var(--brand);
+}
+
+/* The tap pop. Keyed by a counter on the element so an identical repeat tap
+   restarts it — mashing one emoji is the common case, not the edge case. */
+@media (prefers-reduced-motion: no-preference) {
+  .reaction-bar__button--popped {
+    animation: reactionPop 0.24s ease-out;
+  }
+}
+
+@keyframes reactionPop {
+  0%   { transform: scale(0.86); }
+  45%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}

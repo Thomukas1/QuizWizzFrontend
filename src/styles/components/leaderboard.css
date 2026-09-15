@@ -1,0 +1,96 @@
+/* ============================================================
+   Leaderboard — the standings, on either screen
+   ============================================================
+   One list, two sizes. `--sm` is a phone in a hand, `--lg` is a television
+   across a room; nothing else about the rows differs, which is the point of
+   having one component. */
+
+.leaderboard {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  /* The TV's copy scrolls itself, so no scrollbar should ever be visible on it;
+     the phone's is thin enough not to sit on top of a score. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.leaderboard__row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.leaderboard__rank {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  min-width: 1.6em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard__name {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard__score {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--accent);
+  /* Tabular figures, so a column of scores lines up instead of shimmering as
+     the numbers change width. */
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard--sm .leaderboard__row { font-size: var(--font-size-base); }
+
+.leaderboard--lg {
+  gap: var(--space-md);
+}
+
+.leaderboard--lg .leaderboard__row {
+  font-size: clamp(var(--font-size-lg), 1.5vw, 30px);
+  padding: var(--space-md) var(--space-lg);
+}
+
+/* ── Medals ─────────────────────────────────────────────────────────────────
+   Metal, not palette: gold, silver and bronze are the only three colours in the
+   app that mean a specific *place* rather than a role, and no token could carry
+   that without lying about what it is for. They key off the rank, so the host's
+   4th-and-below slice never shows one. */
+
+.leaderboard__row--medal-1 { --medal: #F5C542; }
+.leaderboard__row--medal-2 { --medal: #C7CDD1; }
+.leaderboard__row--medal-3 { --medal: #CE8A4E; }
+
+.leaderboard__row--medal-1,
+.leaderboard__row--medal-2,
+.leaderboard__row--medal-3 {
+  border-color: var(--medal);
+  box-shadow: inset 3px 0 0 var(--medal);
+}
+
+.leaderboard__row--medal-1 .leaderboard__rank,
+.leaderboard__row--medal-2 .leaderboard__rank,
+.leaderboard__row--medal-3 .leaderboard__rank,
+.leaderboard__row--medal-1 .leaderboard__score,
+.leaderboard__row--medal-2 .leaderboard__score,
+.leaderboard__row--medal-3 .leaderboard__score {
+  color: var(--medal);
+}

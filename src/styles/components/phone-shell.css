@@ -1,0 +1,151 @@
+/* ============================================================
+   Phone shell — the controller
+   ============================================================
+   Three rows, every phase: who you are, the phase itself, the reactions. The
+   middle row is the only thing that changes, which is what keeps the identity
+   strip and the reaction bar from ever moving between screens.
+
+   Designed like a gamepad, not like a screen someone watches — the television
+   is doing the talking. */
+
+.phone-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.phone-shell__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.phone-shell__name {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.phone-shell__score {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-accent);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--accent);
+}
+
+.phone-shell__score span {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--text-muted);
+  margin-left: var(--space-xs);
+}
+
+/* The phase. `position: relative` and `isolation` so the emoji overlay inside
+   it is clipped to this row — particles rise past the identity strip's bottom
+   edge and stop, rather than over the top of someone's name. */
+.phone-shell__phase {
+  position: relative;
+  isolation: isolate;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+}
+
+/* A phase whose content is a list rather than a centred statement. The row
+   stops centring and hands its whole height over, so the list scrolls inside it
+   instead of pushing the reaction bar off the bottom of the screen. */
+.phone-shell__phase--fill {
+  display: block;
+  padding: 0;
+  text-align: left;
+}
+
+.phone-final {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  min-height: 0;
+}
+
+/* Pinned below the list rather than scrolling with it: the standings are the
+   long thing here, and a way out you have to scroll to find is not one. */
+.phone-final__leave {
+  flex-shrink: 0;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Above the emoji overlay, which sits at z-index 1 inside the phase row. */
+.phone-shell__waiting {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.phone-shell__waiting-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  letter-spacing: 0.08em;
+}
+
+/* ── Connection states ──────────────────────────────────────────────────────
+   "Your answers are safe" is true: a disconnect never removes anyone from the
+   roster and never discards a submitted answer. Saying so is what stops people
+   frantically reloading, which is the thing that actually loses their place. */
+.phone-shell__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+/* Overrides the global button sizing — this sits inside a one-line status
+   strip, not in the thumb zone, so the 60px tap target would swallow the row. */
+.phone-shell__status-action {
+  min-height: 0;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-alt);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.phone-shell__status--warn {
+  color: var(--color-warning);
+}
+
+.phone-shell__status--error {
+  color: var(--color-error);
+}

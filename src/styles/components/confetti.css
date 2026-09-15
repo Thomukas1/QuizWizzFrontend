@@ -1,0 +1,51 @@
+/* ============================================================
+   Confetti — host, final screen only
+   ============================================================
+   Two elements per piece, as with the emoji stream: the outer falls at a
+   constant rate, the inner tumbles and sways on its own period. One element
+   doing both makes ninety pieces move as a single sheet.
+
+   `transform` and `opacity` only. This runs for as long as the final screen is
+   up, which on a party night is "until someone closes the laptop". */
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Behind the podium and the standings — celebration, not an obstruction. */
+  z-index: 0;
+}
+
+.confetti__piece {
+  position: absolute;
+  top: 0;
+  display: block;
+  will-change: transform;
+  animation: confettiFall var(--fall) linear infinite;
+}
+
+.confetti__flake {
+  display: block;
+  width: var(--w);
+  height: var(--h);
+  background: var(--color);
+  border-radius: 1px;
+  will-change: transform;
+  animation: confettiTumble var(--spin) ease-in-out infinite alternate;
+}
+
+@keyframes confettiFall {
+  from { transform: translate3d(0, -12vh, 0); }
+  to   { transform: translate3d(var(--drift), 112vh, 0); }
+}
+
+@keyframes confettiTumble {
+  from { transform: rotate3d(1, 1, 0, -160deg) scaleX(0.4); }
+  to   { transform: rotate3d(1, 1, 0, 160deg) scaleX(1); }
+}
+
+/* Celebration is not worth making someone ill. The podium says the same thing. */
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+}

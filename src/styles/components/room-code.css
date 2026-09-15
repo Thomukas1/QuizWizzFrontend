@@ -1,0 +1,27 @@
+/* ============================================================
+   Room code — four characters, boxed, display-only
+   ============================================================
+   Nobody types this. It exists so the room can confirm everyone is in the same
+   game and so the host has something to say out loud — which is why it is set
+   in the display face at a size that reads from the back of the room, and why
+   the boxes are separated: `GH7K` read aloud is four characters, not a word. */
+
+.room-code {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.room-code__cell {
+  display: grid;
+  place-items: center;
+  min-width: 1.6em;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-display);
+  font-size: var(--code-size, var(--font-size-2xl));
+  line-height: 1;
+  color: var(--accent);
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}

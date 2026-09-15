@@ -1,0 +1,117 @@
+/* ============================================================
+   Emoji stream — reactions floating up
+   ============================================================
+   Two elements per particle, and that is not an accident. The outer one rises
+   and fades; the inner one sways side to side on its own loop. Composing them
+   means the sway can have a different period from the rise, which is what stops
+   forty particles looking like one animation played forty times.
+
+   **Only `transform` and `opacity` are animated.** Anything that triggers
+   layout drops frames at exactly the moment the whole room is watching the
+   screen — which is the moment this feature exists for.
+
+   `--emoji-travel` is how far a particle climbs, and it must be an **absolute**
+   length. A percentage here would resolve against the particle's own height —
+   `translateY(-100%)` on a 44px emoji moves it 44px, not up the screen — which
+   is the trap this note exists to mark. Each surface sets its own in viewport
+   units, slightly under its real height so a particle finishes fading before
+   `overflow: hidden` cuts it off. */
+
+.emoji-stream {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+  --emoji-travel: 70vh;
+}
+
+.emoji-stream__particle {
+  position: absolute;
+  /* Below the bottom edge where a surface wants them emerging from behind
+     something — they are clipped until they rise into view. */
+  bottom: var(--spawn-offset, 0px);
+  /* `left` is set inline per particle and never animated — it is the spawn
+     point, not the motion. */
+  will-change: transform, opacity;
+  animation: emojiRise var(--rise) cubic-bezier(0.32, 0.12, 0.62, 1) forwards;
+}
+
+.emoji-stream__glyph {
+  display: block;
+  font-size: var(--emoji-size, 34px);
+  line-height: 1;
+  will-change: transform;
+  animation: emojiSway var(--sway) ease-in-out infinite alternate;
+}
+
+@keyframes emojiRise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.5);
+    opacity: 0;
+  }
+  /* Up and out from behind whatever spawned it, at full size, fast. The pop is
+     the acknowledgement of the tap. */
+  12% {
+    transform: translate3d(0, calc(var(--emoji-travel) * -0.1), 0) scale(1.15);
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, calc(var(--emoji-travel) * -1), 0) scale(0.85);
+    opacity: 0;
+  }
+}
+
+@keyframes emojiSway {
+  from { transform: translate3d(calc(var(--sway-x) * -1), 0, 0) rotate(calc(var(--sway-r) * -1)); }
+  to   { transform: translate3d(var(--sway-x), 0, 0) rotate(var(--sway-r)); }
+}
+
+/* Reduced motion: still say that something happened, just don't fly it across
+   the screen. A short fade in place keeps the feedback without the travel. */
+@media (prefers-reduced-motion: reduce) {
+  .emoji-stream__particle {
+    animation: emojiFade 1s ease-out forwards;
+  }
+  .emoji-stream__glyph {
+    animation: none;
+  }
+}
+
+@keyframes emojiFade {
+  0%   { opacity: 0; transform: scale(0.8); }
+  25%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* ── The host's game zone ───────────────────────────────────────────────────
+   Full width of the zone, rising from its bottom edge. It belongs to the zone
+   rather than to any one scene, so the room's reaction carries across a phase
+   change instead of being cut off by it. */
+.emoji-stream--zone {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* The zone is the full viewport height; stop short of the top so a particle
+     finishes fading rather than being clipped mid-flight. */
+  --emoji-travel: 86vh;
+  --emoji-size: 42px;
+}
+
+/* ── The phone's field ──────────────────────────────────────────────────────
+   Overlaid on the phase area and pinned to the bottom, so a particle emerges
+   from *behind* the reaction bar rather than on top of it. */
+.emoji-stream--overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* The phase row is the viewport less the identity strip and the reaction bar.
+     Approximated rather than measured — it only decides where a particle has
+     finished fading, and being a little short is invisible. */
+  --emoji-travel: calc(100dvh - 190px);
+  --emoji-size: 30px;
+  /* Spawn under the bottom edge, so a tap sends the emoji out from *behind* the
+     reaction bar rather than popping it into existence on top of the gap. */
+  --spawn-offset: -46px;
+}

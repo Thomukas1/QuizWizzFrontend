@@ -1,0 +1,39 @@
+/* ============================================================
+   Join invite — QR, link and code
+   ============================================================
+   Sized to the admin panel column rather than to the stage: this is read by
+   somebody standing at the television with their phone out, not from three
+   metres back, so it does not need the room-scale type the game zone uses.
+
+   The QR is still the important one. Typing a URL on fifteen phones is where the
+   energy of an evening dies, and it has to survive being photographed off a
+   screen — hence the white ground and a real quiet zone. */
+
+.join-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.join-invite__qr {
+  width: 100%;
+  /* Never larger than it needs to be — past this the code stops gaining
+     scannability and just crowds the panel. */
+  max-width: 260px;
+  background: var(--white);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  line-height: 0;
+}
+
+.join-invite__url {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-sm), 0.95vw, var(--font-size-lg));
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-align: center;
+  word-break: break-all;
+}

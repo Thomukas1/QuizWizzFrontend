@@ -12,28 +12,21 @@
 @import './components/dropdown.css';
 @import './components/modals.css';
 @import './components/bottom-sheet.css';
-@import './components/lock-screen.css';
-@import './components/bars-page.css';
-@import './components/songwriter.css';
-@import './components/slider.css';
-@import './components/spinners.css';
-@import './components/stat-bar.css';
-@import './components/toast.css';
-@import './components/music-player.css';
-@import './components/mini-player.css';
-@import './components/bop-meter.css';
-@import './components/processing-card.css';
-@import './components/deadline-strip.css';
-@import './components/public-jam.css';
-@import './components/jam-winner.css';
-@import './components/discography-tabs.css';
-@import './components/testimonials.css';
-@import './components/faq.css';
-@import './components/section-fill.css';
-@import './components/facet-card.css';
-@import './components/album-world.css';
-@import './components/jam-world.css';
-@import './components/transitions.css';
+
+/* QuizWizz */
+@import './components/avatar.css';
+@import './components/avatar-slider.css';
+@import './components/room-code.css';
+@import './components/dots.css';
+@import './components/join-invite.css';
+@import './components/reaction-bar.css';
+@import './components/emoji-stream.css';
+@import './components/leaderboard.css';
+@import './components/podium.css';
+@import './components/confetti.css';
+@import './components/host-stage.css';
+@import './components/admin-panel.css';
+@import './components/phone-shell.css';
 
 /* Tailwind CSS */
 @tailwind base;
@@ -51,7 +44,7 @@
 
 /* Body & Root */
 html {
-  height: calc(100vh - 60px);
+  min-height: 100%;
   overflow-y: auto;
   /* Full-bleed fills are 100vw wide, which counts the vertical scrollbar — on
      desktop that's a few px past the visible edge and would raise a horizontal
@@ -98,7 +91,7 @@ body::before {
 /* Mobile-first: force vertical mobile layout even on desktop */
 #root {
   padding-top: var(--space-lg);
-  padding-bottom: var(--app-bottom-inset);
+  padding-bottom: var(--space-lg);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -107,4 +100,68 @@ body::before {
   width: 100%;
   position: relative;
   z-index: 1;
+}
+
+/* ============================================================
+   Two views, one app
+   ============================================================
+   QuizWizz is played on two devices at once and they are not the same shape.
+   The phone strip above is the default — that is the mobile-first bet, and on a
+   desktop it simply centres, which is exactly what we want for a player who
+   joined from a laptop.
+
+   The host is the exception: a laptop on a television, 16:9, fullscreen, read
+   from three metres away. It gets the whole viewport.
+
+   The mode is a `data-view` attribute on <html>, set by whichever page is
+   mounted (see `hooks/useViewMode.ts`). An attribute rather than a class
+   because it is one-of-N, and on <html> rather than on #root so it can reach
+   the scroll behaviour and the page background too. */
+
+/* The television. Fills the viewport, never scrolls: a scrollbar on a TV is a
+   bug you cannot reach with a mouse you are not holding. */
+html[data-view='host'] {
+  height: 100%;
+  overflow: hidden;
+}
+
+html[data-view='host'] body {
+  /* The stage owns its own overscan-safe margins — some TVs still crop edges. */
+  padding: 0;
+}
+
+html[data-view='host'] #root {
+  max-width: none;
+  height: 100dvh;
+  padding: 0;
+}
+
+/* The phone. The 430px strip, but full-height so the reaction bar can sit on
+   the bottom edge rather than below the fold. */
+html[data-view='player'] #root {
+  min-height: 100dvh;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Neither: a form that has to read on both. Centred in whatever it is given. */
+html[data-view='auto'] #root {
+  max-width: 520px;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-xl);
+}
+
+/* Touch targets are tapped, not clicked: kill the 300ms double-tap zoom delay
+   and the long-press text selection that makes a fast round maddening. */
+html[data-view='player'] {
+  touch-action: manipulation;
+}
+
+html[data-view='player'] button,
+html[data-view='host'] button {
+  user-select: none;
+  -webkit-user-select: none;
 }

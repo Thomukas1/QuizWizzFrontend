@@ -1,0 +1,40 @@
+/* ============================================================
+   Avatar — the only place a player's face is drawn
+   ============================================================
+   A fixed square with a coloured ground, sized in *pixels* by the call site
+   exactly as an <img> would be. That is what lets an emoji tile and a 512×512
+   photo be the same object on screen, so no layout moves the day photos land.
+
+   The font size is derived from the box and is the ONLY font size an avatar has,
+   anywhere. A call site that reaches for its own is a call site that will
+   disagree with the next one. */
+
+.avatar {
+  width: var(--size);
+  height: var(--size);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 22%;
+  background: var(--avatar-ground);
+  /* The ground is a generated hue, so it sits outside the palette. A dark inner
+     edge keeps it from floating off the cobalt surfaces. */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), var(--shadow-sm);
+  font-size: calc(var(--size) * 0.62);
+  line-height: 1;
+  user-select: none;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* Disconnected. Greyed rather than hidden — the tile staying put is the point:
+   it tells the room it is someone's wifi and not the server. */
+.avatar--offline {
+  filter: grayscale(1);
+  opacity: 0.45;
+}

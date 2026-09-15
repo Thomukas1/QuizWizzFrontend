@@ -1,0 +1,80 @@
+/* ============================================================
+   Avatar slider — pick your face
+   ============================================================
+   A swipeable rail rather than the full grid, so the picker costs one thumb
+   gesture and no vertical space on a phone.
+
+   **Scrolling is not choosing.** The centred item is only highlighted; it is
+   selected by tapping it. That is deliberate: the server refuses a join with no
+   avatar rather than defaulting one, precisely so that a picker which quietly
+   pre-selects can't give fifteen people the same face. Swiping past something
+   is not the same as picking it. */
+
+.avatar-slider {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* The rail runs edge to edge, but the first and last items still have to be
+     able to reach the middle. */
+  padding: var(--space-md) calc(50% - 34px);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.avatar-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.avatar-slider__option {
+  /* Overrides the global button padding — this is a square target. */
+  padding: var(--space-xs);
+  min-height: 0;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-base), border-color var(--transition-base);
+}
+
+/* Selection is a ring, not a colour change — a colour change gets lost behind
+   the emoji sitting on top of it. */
+.avatar-slider__option--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(182, 248, 51, 0.25);
+  transform: scale(1.08);
+}
+
+.avatar-slider__hint {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* The rail edges fade out, so it reads as continuing rather than ending. */
+.avatar-slider-frame {
+  position: relative;
+}
+
+.avatar-slider-frame::before,
+.avatar-slider-frame::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 42px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.avatar-slider-frame::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-primary), rgba(5, 22, 72, 0));
+}
+
+.avatar-slider-frame::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-primary), rgba(5, 22, 72, 0));
+}

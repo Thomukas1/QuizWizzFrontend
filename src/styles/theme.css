@@ -49,20 +49,6 @@
   --color-warning: var(--p-warning);
   --color-info:    var(--p-blue);
 
-  /* Trait accents — the four elements each artist is built from */
-  --facet-personality: var(--p-warning);   /* amber  */
-  --facet-appearance:  #B98CFF;            /* violet */
-  --facet-voice:       #4F9DE0;            /* sky    */
-  --facet-taste:       var(--p-sage);      /* sage   */
-
-  /* Data visualization — stat bar colors (palette-derived) */
-  --stat-energy:      var(--accent);       /* Lime Green — vitality */
-  --stat-focus:       var(--brand);        /* Persian Blue — concentration */
-  --stat-inspiration: var(--text-soft);    /* Tea Green — creativity */
-
-  /* Component internals */
-  --track-bg: rgba(255, 255, 255, 0.15);  /* slider/progress track on dark bg */
-
   /* Typography - Font Families */
   --font-display: 'Xirod', sans-serif;
   --font-body: 'Masicu', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -119,15 +105,6 @@
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.5);
-
-  /* Hero layout */
-  --hero-height: 350px;
-  --hero-overlap: 100px;
-
-  /* Strip #root reserves at the bottom of every page for the fixed NavBar and
-     the mini player above it. A fill that has to reach the very bottom of the
-     page must paint past this, so it can't stay a bare number in index.css. */
-  --app-bottom-inset: 130px;
 
   /* Z-indexes */
   --z-dropdown: 100;

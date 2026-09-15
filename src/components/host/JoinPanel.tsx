@@ -1,5 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { RoomCode } from './RoomCode';
+import { RoomCode } from '../RoomCode';
 
 /**
  * How the room gets in: a QR code, the URL under it for anyone whose camera

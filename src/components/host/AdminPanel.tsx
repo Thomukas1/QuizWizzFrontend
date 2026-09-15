@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { JoinPanel } from './JoinPanel';
-import type { HostCommand } from '../services/quizwizz';
+import type { HostCommand } from '../../services/quizwizz';
 
 /**
  * **The remote.** Every host command lives here, so the game zone never has a
@@ -42,12 +42,22 @@ export function AdminPanel({
   // panel with one you press all evening. So it arms first: one click to mean
   // it, a second to do it. Cheaper than a modal and it disarms itself.
   const [armed, setArmed] = useState(false);
+  // Same treatment for Skip: it ends the running game with no awards, so it
+  // costs everyone the points they were playing for and it sits next to the
+  // button you press all evening.
+  const [skipArmed, setSkipArmed] = useState(false);
 
   useEffect(() => {
     if (!armed) return;
     const id = setTimeout(() => setArmed(false), 4000);
     return () => clearTimeout(id);
   }, [armed]);
+
+  useEffect(() => {
+    if (!skipArmed) return;
+    const id = setTimeout(() => setSkipArmed(false), 4000);
+    return () => clearTimeout(id);
+  }, [skipArmed]);
 
   return (
     <div className="admin-panel">
@@ -77,13 +87,26 @@ export function AdminPanel({
 
       <div className="admin-panel__remote">
         {/*
-          Disabled, and it should be. `back` is only meaningful from ROUND_INTRO
-          and SCOREBOARD; everywhere else the server answers `not_allowed`. It
-          is here now so the remote has the shape it will keep — a control that
-          appears halfway through a project is a control nobody's thumb expects.
+          The escape hatch, and the reason an unclaimed `next` during GAME can
+          safely be refused: `skipGame` force-ends the running game with no
+          awards without consulting the module, so a format that has hung — or
+          one nobody wants to sit through — can't hold the evening hostage.
+
+          Armed like the wipe button, because it silently costs everyone the
+          points they were playing for.
         */}
-        <button type="button" className="admin-btn admin-btn--ghost" disabled title="Not yet — no phase can go back">
-          ← Back
+        <button
+          type="button"
+          className={`admin-btn admin-btn--ghost${skipArmed ? ' admin-btn--armed' : ''}`}
+          disabled={!connected}
+          title="End the running game with no points awarded"
+          onClick={() => {
+            if (!skipArmed) return setSkipArmed(true);
+            setSkipArmed(false);
+            command('skipGame');
+          }}
+        >
+          {skipArmed ? 'Tap to skip' : 'Skip ↦'}
         </button>
 
         <button

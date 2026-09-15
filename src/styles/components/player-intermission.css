@@ -1,0 +1,60 @@
+/* ============================================================
+   Player intermission — the break between things
+   ============================================================
+   The lobby, the podium, and whatever "up next" card sits between two games.
+   One layout for all of them, because the phone is doing the same job in each:
+   show where everybody stands, and let people shout.
+
+   The reaction bar is part of *this*, not of the shell. That is the whole
+   mechanism behind "reactions only between games" — during a round the scene is
+   `.player-round` and there is no bar in the tree to disable. */
+
+.player-intermission {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Everything above the bar. `isolation` and `overflow` keep the emoji field
+   clipped to this box, so a particle rises out from behind the buttons and
+   fades before it reaches the header — it must never cross somebody's name. */
+.player-intermission__stage {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Above the emoji overlay, which sits at z-index 1 inside the stage. */
+.player-intermission__body {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+}
+
+.player-intermission__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  letter-spacing: 0.08em;
+}
+
+/* Pinned below the list rather than scrolling with it: the standings are the
+   long thing here, and a way out you have to scroll to find is not one. */
+.player-intermission__leave {
+  flex-shrink: 0;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}

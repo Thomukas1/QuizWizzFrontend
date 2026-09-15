@@ -1,35 +1,36 @@
 import type { PublicPlayer } from '../services/quizwizz';
 
 /**
- * Turning a roster into standings.
+ * Reading standings off the roster.
  *
- * Its own file rather than sitting beside `<Leaderboard>`: the podium and both
- * final screens need it, and a module that exports a component *and* a function
- * loses fast refresh for everything in it.
+ * **This orders; it never ranks.** `rank` and `previousRank` arrive on every
+ * `PublicPlayer`, folded by the server from its own ledger — a client that works
+ * out its own placings is a client that can be edited into first place, and this
+ * one runs on the guests' phones.
+ *
+ * It used to sort by score and number the result. That was the client deriving
+ * standings, it disagreed between the television and the phone whenever a tie
+ * broke differently, and it produced no movement arrows at all for a phone that
+ * reconnected mid-animation. The server sends both numbers now; this file's only
+ * job is to put the rows in order.
  */
 
-export interface RankedPlayer {
-  rank: number;
-  player: PublicPlayer;
+/** Ascending by `rank`, which the server guarantees is 1-based, gapless and unshared. */
+export function byRank(players: PublicPlayer[]): PublicPlayer[] {
+  return [...players].sort((a, b) => a.rank - b.rank);
 }
 
 /**
- * **This orders; it never computes.** Every `score` here was folded from the
- * server's ledger and arrived in `roster:update` — a client that adds up its own
- * points is a client that can be edited into first place, and this one runs on
- * the guests' phones.
+ * Where a player moved since the last completed game.
  *
- * `roster:update` arrives in join order and `sort` is stable, so equal scores
- * keep the order they joined in — which is exactly the tie rule the server's own
- * `standings()` uses. Matching it by construction is why there is no tie-break
- * here to disagree with it later.
- *
- * Ranks are sequential rather than shared (no two 3rds, no missing 4th). A
- * podium holds exactly three people, and "who is on the box" should not be a
- * question the screen leaves open at the loudest moment of the evening.
+ * `null` means there is nothing to say — either no game has been scored yet, or
+ * they did not move. Both render as no arrow, which is deliberate: a dash next
+ * to eleven of fifteen names is noise, and the arrows only mean anything if the
+ * eye can find them.
  */
-export function rankPlayers(players: PublicPlayer[]): RankedPlayer[] {
-  return [...players]
-    .sort((a, b) => b.score - a.score)
-    .map((player, index) => ({ rank: index + 1, player }));
+export function movementOf(player: PublicPlayer): { direction: 'up' | 'down'; places: number } | null {
+  if (player.previousRank === null || player.previousRank === player.rank) return null;
+  return player.previousRank > player.rank
+    ? { direction: 'up', places: player.previousRank - player.rank }
+    : { direction: 'down', places: player.rank - player.previousRank };
 }

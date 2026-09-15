@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { EmojiStream } from './EmojiStream';
-import type { EmojiFeed } from './EmojiStream';
+import { EmojiStream } from '../EmojiStream';
+import type { EmojiFeed } from '../EmojiStream';
 
 /**
  * **The middle 60% — where every scene is played.**

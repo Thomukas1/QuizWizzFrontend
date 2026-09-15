@@ -1,5 +1,5 @@
-import { Avatar } from '../../components/Avatar';
-import { AVATAR_EMOJI } from '../../services/quizwizz';
+import { Avatar } from '../../../components/Avatar';
+import { AVATAR_EMOJI } from '../../../services/quizwizz';
 
 /**
  * Pick your face — a swipeable rail of the forty avatars from `config.ts`,

@@ -1,5 +1,6 @@
 import type {
-  Deadline,
+  GameRef,
+  GameRun,
   Phase,
   PublicLedgerEntry,
   PublicPlayer,
@@ -51,21 +52,30 @@ export interface QuizWizzState {
   sessionId: string | null;
   /** Goes on the TV. Null until the first snapshot lands. */
   code: string | null;
+  /**
+   * **`GAME` means a module owns the screen; anything else means the engine
+   * does.** That is the only branch either view makes, and it is why there is no
+   * "is this an intermission" helper: the question is the phase itself.
+   */
   phase: Phase | null;
-  roundIndex: number;
-  roundCount: number;
-  /** **The** deadline. There is only ever one, and it only arrives with a phase. */
-  deadline: Deadline | null;
-  round: SessionSnapshot['round'];
+  gameIndex: number;
+  gameCount: number;
+  /** The game running, or the one that just ended. Null in `LOBBY` and `FINAL`. */
+  game: GameRun | null;
+  /** What `RESULTS` announces. Null means the next stop is `FINAL`. */
+  upNext: GameRef | null;
   players: PublicPlayer[];
-  /** This client's own projection — `toDisplay` for the host, `toPlayer` for a phone. */
+  /**
+   * This client's own projection — `toDisplay` for the host, `toPlayer` for a
+   * phone — **and where the deadline lives.** There is deliberately no
+   * `state.deadline`: a game's steps are timed individually inside one phase, so
+   * the frame is the only thing that changes often enough to carry one.
+   */
   view: ViewFrame | null;
   /** Players only. The host has no `you`. */
   you: SessionSnapshot['you'];
 
   // ── Transient things a component reacts to rather than renders ───────────
-  /** Host only. *Who* has answered, never *what* — the ids are all the server sends. */
-  progress: { answered: string[]; total: number } | null;
   /** The latest scoring pass, for "+3 — 1st fastest" flyups. */
   scores: { entries: PublicLedgerEntry[]; totals: ScoreTotal[] } | null;
   /**
@@ -86,14 +96,13 @@ const EMPTY: QuizWizzState = {
   sessionId: null,
   code: null,
   phase: null,
-  roundIndex: 0,
-  roundCount: 0,
-  deadline: null,
-  round: null,
+  gameIndex: 0,
+  gameCount: 0,
+  game: null,
+  upNext: null,
   players: [],
   view: null,
   you: null,
-  progress: null,
   scores: null,
   burst: null,
   ack: null,
@@ -176,17 +185,16 @@ export function apply(message: ServerMessage): void {
         sessionId: s.sessionId,
         code: s.code,
         phase: s.phase,
-        roundIndex: s.roundIndex,
-        roundCount: s.roundCount,
-        deadline: s.deadline,
-        round: s.round,
+        gameIndex: s.gameIndex,
+        gameCount: s.gameCount,
+        game: s.game,
+        upNext: s.upNext,
         players: s.players,
         view: s.view,
         you: s.you,
         // A snapshot describes the moment, not the events that got here. Anything
         // transient is from before the disconnect and re-showing it would replay
         // an old toast over a freshly painted screen.
-        progress: null,
         burst: null,
         ack: null,
         refusal: null,
@@ -194,33 +202,27 @@ export function apply(message: ServerMessage): void {
       break;
     }
 
+    /**
+     * The phase, and everything `round:begin` used to carry.
+     *
+     * **Leaving `GAME` tears the module's view down**, which is what the deleted
+     * `round:end` did. It has to happen here rather than on its own message: a
+     * stale projection left on screen is a question still asking to be answered
+     * after the scoring is already done, and the deadline rides on that frame
+     * now, so a leftover one would keep a timer running through the results.
+     */
     case 'session:phase': {
       const p = message.payload;
       set({
         phase: p.phase,
-        roundIndex: p.roundIndex,
-        roundCount: p.roundCount,
-        deadline: p.deadline,
-        // Progress belongs to the phase that was counting. Carrying "9 of 15 in"
-        // into the results screen is just a lie with a number in it.
-        progress: null,
+        gameIndex: p.gameIndex,
+        gameCount: p.gameCount,
+        game: p.game,
+        upNext: p.upNext,
+        ...(p.phase === 'GAME' ? { ack: null } : { view: null }),
       });
       break;
     }
-
-    case 'round:begin':
-      set({ round: message.payload, ack: null, progress: null });
-      break;
-
-    /**
-     * Tear down the game component. The view goes with it: a stale projection
-     * left on screen is a question still asking to be answered after scoring.
-     */
-    case 'round:end':
-      if (state.round?.roundId === message.payload.roundId) {
-        set({ round: null, view: null });
-      }
-      break;
 
     // One of these arrives, never both — the server sends `view:display` to the
     // host connection and `view:player` to a phone. Both land in the same field
@@ -239,9 +241,10 @@ export function apply(message: ServerMessage): void {
       set({ players: message.payload.players });
       break;
 
-    case 'answers:progress':
-      set({ progress: message.payload });
-      break;
+    // `answers:progress` used to be here. "9 of 15 in" is a fact about the
+    // module's current item, and once the engine stopped knowing what an item
+    // is it could no longer count them — a module that wants the row projects
+    // it in its own `toDisplay`, ids only, exactly as before.
 
     case 'react:burst':
       set({ burst: { seq: ++seq, items: message.payload.items } });
@@ -252,21 +255,18 @@ export function apply(message: ServerMessage): void {
       break;
 
     /**
-     * Totals are authoritative and arrive alongside the deltas. They're folded
-     * into the roster here so a scoreboard has one place to read a score from,
-     * whether it was last touched by a scoring pass or a roster update.
+     * The deltas, for the "+3 — 1st fastest" flyups, and nothing else.
+     *
+     * **It deliberately does not write scores into the roster.** It used to, so
+     * that a scoreboard had one place to read from — but a player row now
+     * carries `rank` and `previousRank` alongside `score`, and folding a total
+     * in here would update one of the three and leave the other two describing
+     * the moment before it. The `roster:update` that follows carries all three
+     * together and is the only thing that moves a standing.
      */
-    case 'score:update': {
-      const { entries, totals } = message.payload;
-      const byId = new Map(totals.map(t => [t.playerId, t.score]));
-      set({
-        scores: { entries, totals },
-        players: state.players.map(p =>
-          byId.has(p.id) ? { ...p, score: byId.get(p.id)! } : p,
-        ),
-      });
+    case 'score:update':
+      set({ scores: message.payload });
       break;
-    }
 
     /**
      * A refusal. The endings — `invalid_token`, `player_kicked`, `session_ended`

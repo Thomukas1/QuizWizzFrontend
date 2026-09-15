@@ -3,9 +3,13 @@ import { fractionLeft, remaining } from '../../services/quizwizz';
 import type { Deadline } from '../../services/quizwizz';
 
 /**
- * **The** timer. There is exactly one deadline at a time and it always arrives
- * with a phase, so this is the only thing in the app that counts down — a game
- * module arming its own is what makes two timers disagree on screen.
+ * **The** timer, and the only thing in the app that counts down.
+ *
+ * There is exactly one deadline at a time because there is exactly one current
+ * `ViewFrame`, which is where it rides — `state.view.deadline`, never a field of
+ * its own. It moved there when the six phases became four: a game now runs its
+ * intro, its questions and its reveals inside a single `GAME` phase, so a
+ * deadline hung off the phase could only be set once per game.
  *
  * Driven by `serverNow()`, never `Date.now()`: the deadline is an absolute
  * *server* timestamp, and a phone whose clock is a minute fast would otherwise

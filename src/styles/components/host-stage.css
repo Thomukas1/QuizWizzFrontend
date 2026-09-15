@@ -142,9 +142,9 @@
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* Unused since the lobby stopped prompting, and kept on purpose: ROUND_INTRO,
-   ROUND_RESULTS and SCOREBOARD all end on a "SPACE to …" line, and this is the
-   vocabulary they will use. */
+/* Unused since the lobby stopped prompting, and kept on purpose: a module's own
+   intro and reveal steps both end on a "SPACE to …" line, and this is the
+   vocabulary they will use when they arrive. */
 .game-zone__cue {
   font-family: var(--font-accent);
   font-size: clamp(var(--font-size-lg), 1.8vw, 34px);

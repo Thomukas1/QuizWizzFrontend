@@ -13,20 +13,29 @@
 @import './components/modals.css';
 @import './components/bottom-sheet.css';
 
-/* QuizWizz */
+/* QuizWizz — shared. The handful of things that are genuinely the same object
+   on a television and in a hand. */
 @import './components/avatar.css';
-@import './components/avatar-slider.css';
 @import './components/room-code.css';
 @import './components/dots.css';
-@import './components/join-invite.css';
-@import './components/reaction-bar.css';
 @import './components/emoji-stream.css';
 @import './components/leaderboard.css';
-@import './components/podium.css';
-@import './components/confetti.css';
+
+/* QuizWizz — host. The television: three metres away, never scrolls. */
 @import './components/host-stage.css';
 @import './components/admin-panel.css';
-@import './components/phone-shell.css';
+@import './components/join-invite.css';
+@import './components/awards.css';
+@import './components/podium.css';
+@import './components/confetti.css';
+
+/* QuizWizz — player. The phone: portrait, tap-tuned, a gamepad. */
+@import './components/player-shell.css';
+@import './components/player-header.css';
+@import './components/player-intermission.css';
+@import './components/player-game.css';
+@import './components/reaction-bar.css';
+@import './components/avatar-slider.css';
 
 /* Tailwind CSS */
 @tailwind base;

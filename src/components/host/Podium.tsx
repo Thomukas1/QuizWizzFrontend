@@ -1,5 +1,5 @@
-import { Avatar } from './Avatar';
-import type { RankedPlayer } from './standings';
+import { Avatar } from '../Avatar';
+import type { PublicPlayer } from '../../services/quizwizz';
 
 /**
  * The top three, on the box.
@@ -16,15 +16,15 @@ import type { RankedPlayer } from './standings';
 /** Decoration, not protocol — these never cross the wire, so they live here. */
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-export function Podium({ top }: { top: RankedPlayer[] }) {
+export function Podium({ top }: { top: PublicPlayer[] }) {
   return (
     <div className="podium">
-      {top.slice(0, 3).map(({ rank, player }) => (
-        <div key={player.id} className={`podium__card podium__card--${rank}`}>
-          <span className="podium__medal" aria-hidden="true">{MEDALS[rank - 1]}</span>
+      {top.slice(0, 3).map(player => (
+        <div key={player.id} className={`podium__card podium__card--${player.rank}`}>
+          <span className="podium__medal" aria-hidden="true">{MEDALS[player.rank - 1]}</span>
           <Avatar
             avatar={player.avatar}
-            size={rank === 1 ? 132 : 104}
+            size={player.rank === 1 ? 132 : 104}
             seed={player.id}
             offline={!player.connected}
           />

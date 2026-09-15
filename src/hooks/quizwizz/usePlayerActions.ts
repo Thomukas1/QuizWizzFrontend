@@ -2,15 +2,16 @@ import { useCallback, useMemo, useRef } from 'react';
 import { send } from '../../services/quizwizz';
 
 /**
- * Everything a phone can send. Bound to the current `roundId`, because every
- * submission carries one — a late answer for a finished round comes back
- * `answer:ack { accepted: false, reason: 'stale_round' }` rather than scoring
- * against whatever is on screen now.
+ * Everything a phone can send. Bound to the current `runId` — one playthrough of
+ * one game — because every submission carries it: a late answer for a finished
+ * game comes back `answer:ack { accepted: false, reason: 'stale_run' }` rather
+ * than scoring against whatever is on screen now.
  *
- * Pass `null` between rounds and the senders become no-ops, so a component
- * doesn't need to guard each call site.
+ * Pass `null` outside `GAME` and the two submission senders become no-ops, so a
+ * component doesn't need to guard each call site. `react` is unbound and always
+ * live: a reaction belongs to the room, not to a game.
  */
-export function usePlayerActions(roundId: string | null) {
+export function usePlayerActions(runId: string | null) {
   // The minigame channel's sequence number is the client's to own — the server
   // uses it to order a burst of inputs it may receive out of order, and never to
   // time them. A ref, not state: bumping it must not re-render a game mid-tap.
@@ -23,19 +24,19 @@ export function usePlayerActions(roundId: string | null) {
    */
   const answer = useCallback(
     (itemId: string, choice: unknown) => {
-      if (!roundId) return;
-      send({ type: 'player:answer', payload: { roundId, itemId, choice } });
+      if (!runId) return;
+      send({ type: 'player:answer', payload: { runId, itemId, choice } });
     },
-    [roundId],
+    [runId],
   );
 
   /** The minigame channel: many small events, no ack, fire and forget. */
   const input = useCallback(
     (type: string, payload?: unknown) => {
-      if (!roundId) return;
-      send({ type: 'player:input', payload: { roundId, seq: seq.current++, type, payload } });
+      if (!runId) return;
+      send({ type: 'player:input', payload: { runId, seq: seq.current++, type, payload } });
     },
-    [roundId],
+    [runId],
   );
 
   /**

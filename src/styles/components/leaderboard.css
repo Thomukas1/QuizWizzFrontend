@@ -24,6 +24,9 @@
   display: grid;
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
+  /* The rows are re-ordered by the server, not by us — but they still move, and
+     the moment they do is the loudest of the evening. Transform only. */
+  transition: background var(--transition-fast);
   gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-surface);
@@ -38,6 +41,36 @@
   min-width: 1.6em;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Movement since the last completed game. The extra column exists for the whole
+   list or for none of it, so the scores stay in one line down the right edge —
+   see `<Leaderboard movement>`. */
+.leaderboard--moving .leaderboard__row {
+  grid-template-columns: auto auto 1fr auto auto;
+}
+
+.leaderboard__move {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+  /* Reserves the width of the widest arrow + two digits, so a row with no
+     movement leaves a gap the same size rather than pulling its score left. */
+  min-width: 2.6em;
+  justify-content: flex-end;
+  font-family: var(--font-accent);
+  font-size: 0.8em;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.leaderboard__move--up {
+  color: var(--color-success);
+}
+
+.leaderboard__move--down {
+  color: var(--color-error);
 }
 
 .leaderboard__name {

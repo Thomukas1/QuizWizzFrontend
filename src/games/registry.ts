@@ -12,6 +12,13 @@ import type { Avatar, Deadline, PublicPlayer } from '../services/quizwizz';
  * The props below are fixed, which is what keeps a game from ever touching the
  * socket or the clock: it is handed its state, the roster, the deadline and two
  * senders, and that is the entire world it can see.
+ *
+ * **A module owns the whole of `GAME`** — its title card, its rules screen, its
+ * play and its reveal. The engine used to own three of those as phases and hand
+ * over only the middle one; it owns all of them now, which is why a format can
+ * look like whatever it needs to rather than being bent into the shape of a
+ * quiz. The corollary is that a game ends when it says so, by the server module
+ * calling `finish(awards)` — the client half never decides that.
  */
 
 /**
@@ -23,6 +30,7 @@ import type { Avatar, Deadline, PublicPlayer } from '../services/quizwizz';
 export interface DisplayProps<S = unknown> {
   state: S;
   players: PublicPlayer[];
+  /** This step's deadline, off the frame. Null for a step that isn't timed. */
   deadline: Deadline | null;
   serverNow: () => number;
 }
@@ -48,8 +56,8 @@ export interface GameComponents {
 
 /**
  * Keyed by `gameId`, matching the server's own registry. Lazy on purpose: a
- * round's components load when `round:begin` names them, so the join screen
- * isn't carrying twelve games it may never play.
+ * game's components load when a frame names them, so the join screen isn't
+ * carrying twelve games it may never play.
  *
  * ```ts
  * 'quiz-deathmatch': {

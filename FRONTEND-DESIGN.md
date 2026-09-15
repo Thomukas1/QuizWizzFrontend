@@ -40,27 +40,37 @@ is the only client allowed to send commands.
 
 ## 2. Phases — what each view shows
 
-The outer loop. A game module owns everything inside `ROUND_ACTIVE`.
+The outer loop. **A game module owns the whole of `GAME`** — its title card, its rules screen, its
+play and its reveal.
 
 ```
-LOBBY → ROUND_INTRO → ROUND_ACTIVE → ROUND_RESULTS → SCOREBOARD →┐
-          ↑                                                       │
-          └───────────────── next round ──────────────────────────┤
-                                                                  ↓
-                                                                FINAL
+LOBBY → GAME → RESULTS →┐
+          ↑              │   the playlist has more games
+          └──────────────┤
+                         ↓   the playlist is exhausted
+                       FINAL
 ```
 
 | Phase | Host | Player |
 |---|---|---|
-| `LOBBY` | Room code, QR code, joined tiles filling up | "You're in" + their own tile |
-| `ROUND_INTRO` | Title card: `round:begin.title` + `rules` | "Get ready" + the same title |
-| `ROUND_ACTIVE` | `<Display>` + timer bar + progress | `<Player>` — their board |
-| `ROUND_RESULTS` | `<Display>` keeps rendering; reveals step on `next` | Their own result, quietly |
-| `SCOREBOARD` | Standings + movement since last round | Their rank and delta |
-| `FINAL` | Podium | "Thanks for playing" + final rank |
+| `LOBBY` | Room code, QR code, joined tiles filling up | "You're in" + standings + reaction bar |
+| `GAME` | `<Display>` — the module's, whole | `<Player>` — their board. **No reaction bar** |
+| `RESULTS` | The payout list: who gained what, and why. "Next up — X" | "Scores are in" + standings with movement + reaction bar |
+| `FINAL` | Podium | Final standings + reaction bar + a way out |
 
-Both views must render every phase, including ones they have nothing to say about. A blank screen
-mid-party reads as broken.
+Three phases belong to the engine and one belongs to a module. That is the only distinction either
+view makes, and it is `phase === 'GAME'` — not a table of phase kinds.
+
+`ROUND_INTRO` and `ROUND_RESULTS` are gone because a format's opening and its reveal are part of the
+format: one `rules?: string` was never going to serve a drawing round and a buzzer race.
+`SCOREBOARD` is gone because the standings are in the host's left panel from the first join to the
+podium, so a phase for looking at them was the same list on screen twice. See
+[PHASE-REDESIGN.md](PHASE-REDESIGN.md).
+
+Both views must render every phase, including ones they have nothing to say about, and including the
+beat before a module's first frame lands. A blank screen mid-party reads as broken — and the first
+thing anyone does about it is reload, which on a phone is the one action that actually costs them
+their place.
 
 ---
 
@@ -204,13 +214,14 @@ evening dies. Make it scannable from the back of the room.
 The code is display-only — nobody types it. It exists so the room can confirm everyone is in the
 same game, and so you have something to say out loud.
 
-### ROUND_INTRO
+### GAME — the opening
+
+The title card is the **module's first step**, not a phase. It looks like this only if the module
+draws it this way; a drawing round might open on an example canvas and a buzzer race on a countdown.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                                           round 2 of 6  │
-│                                                         │
-│                      R O U N D  2                       │
+│                                            game 2 of 6  │
 │                                                         │
 │                     D E A T H M A T C H                 │
 │                                                         │
@@ -222,10 +233,15 @@ same game, and so you have something to say out loud.
 └─────────────────────────────────────────────────────────┘
 ```
 
-Title and rules come from `round:begin`, not from round state — they are available before the round
-has any state at all.
+Space here is claimed by the module, so the phase does not move — the module just projects its next
+step. That is the mechanism that lets a format pace its own opening.
 
-### ROUND_ACTIVE
+**Build the shared opener once.** Every format now has to draw its own title card, and left alone
+that is how the fourth game ends up with a worse intro than the first. Ship an opt-in title/rules
+component a module renders when it has nothing special to say: a default it can decline, rather than
+a phase it has to work around.
+
+### GAME — play
 
 The middle is the game's `<Display>`. Everything around it is yours.
 
@@ -252,49 +268,63 @@ The timer is a **shrinking bar, not just digits** — readable at three metres, 
 in a way numbers don't. Drive it from `requestAnimationFrame` against `serverNow()`, never from a
 server tick.
 
-The progress row is `answers:progress` — **ids only**. The server never sends what anyone answered
-before the reveal, so there is nothing to leak here even by accident.
+The progress row is **the module's own projection** — ids only. The engine no longer knows what an
+item is, so it cannot count them; a format that wants this row puts `answered` and `total` in its
+`toDisplay`. The server never sends what anyone answered before the reveal, so there is nothing to
+leak here even by accident.
 
-### ROUND_RESULTS
+### GAME — the reveal
 
-Whatever the module projects. Reveals are often multi-step and paced by Space; the phase doesn't move
-until the module stops claiming the key.
+Also the module's, and also not a phase. Reveals are often multi-step and paced by Space; the phase
+doesn't move, because the module keeps claiming the key.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                                                         │
 │                  The answer was  B E R L I N            │
 │                                                         │
-│      🦊 Ada      ✓  1.2s     +3   1st fastest           │
-│      🐙 Bo       ✓  1.9s     +2   2nd fastest           │
-│      🚀 Cy       ✓  2.4s     +2   3rd fastest           │
-│      🐸 Dee      ✗  —         —                         │
+│      🦊 Ada      ✓  1.2s                                │
+│      🐙 Bo       ✓  1.9s                                │
+│      🚀 Cy       ✓  2.4s                                │
+│      🐸 Dee      ✗  —                                   │
 │                                                         │
 │                            SPACE to continue ▸          │
 └─────────────────────────────────────────────────────────┘
 ```
 
-Points and their reasons come from `score:update` — `delta` and `reason` are written for exactly this
-screen (`"1st fastest"`, `"3 correct"`, `"host adjustment"`).
+**No points on this screen.** The module keeps its own scoring in whatever shape suits it — lives,
+streaks, buzzer order — and converts to system points exactly once, when it finishes. Which is the
+next screen.
 
-### SCOREBOARD
+### RESULTS
+
+The module has handed its awards over. The engine writes the ledger, re-ranks everyone, and shows
+the payout.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    S T A N D I N G S                    │
+│                    D E A T H M A T C H                  │
 │                                                         │
-│   1   🦊  Ada        9   ▲2   +3                        │
-│   2   🚀  Cy         7   ▲1   +2                        │
-│   3   🐙  Bo         7   ▼2   +2                        │
-│   4   🐸  Dee        4   –     —                        │
-│   5   🍕  Eli        2   ▼1   —                         │
+│      🦊 Ada          1st fastest              +3        │
+│      🐙 Bo           2nd fastest              +2        │
+│      🚀 Cy           3rd fastest              +2        │
+│      🐸 Dee          —                         —        │
 │                                                         │
-│                            SPACE for round 3 ▸          │
+│                     Next up — Emoji Riddles             │
 └─────────────────────────────────────────────────────────┘
 ```
 
-Movement arrows need the previous standings — keep the last `totals` you saw in the store and diff.
-Animate rows to their new positions; it's the moment the room is loudest.
+`delta` and `reason` come from `score:update` and are written by the module for exactly this screen
+(`"1st fastest"`, `"3 correct"`, `"survived"`). **The reason is not fine print** — it is the only
+explanation the room gets for a number.
+
+Not the standings: those are in the left panel and have been all evening, and repeating them here is
+precisely what made `SCOREBOARD` redundant. The movement arrows live there too, driven by `rank` and
+`previousRank` straight off the wire — no diffing, so a phone that reconnects mid-animation still
+shows them.
+
+"Next up — X" is `upNext`. **`upNext: null` means the podium is next**, and saying so is what stops
+the room wondering whether the game broke or ended.
 
 ### FINAL
 
@@ -424,9 +454,11 @@ scan the QR code before you press Start.
 └───────────────────────┘
 ```
 
-### ROUND_ACTIVE — answering
+### GAME — answering
 
 The middle is the game's `<Player>`. Bare, large controls; the question is on the TV.
+
+**No reaction bar.** The thumb zone belongs to the game.
 
 ```
 ┌───────────────────────┐
@@ -447,8 +479,9 @@ The middle is the game's `<Player>`. Bare, large controls; the question is on th
 │  │        D        │  │
 │  └─────────────────┘  │
 │                       │
-├───────────────────────┤
-│ 🔥 😂 💀 ❤️ 🤯 👏 😭 🎉│
+│   ← no bar here; the  │
+│   module owns to the  │
+│   bottom edge         │
 └───────────────────────┘
 ```
 
@@ -458,7 +491,7 @@ rejects duplicates anyway, but a button that still looks live invites a second t
 Split-screen by design: the question is on the TV, the phone is buttons. That falls out of
 `toPlayer` never containing the question, so don't fight it.
 
-### ROUND_ACTIVE — answered
+### GAME — answered
 
 ```
 ┌───────────────────────┐
@@ -474,29 +507,37 @@ Split-screen by design: the question is on the TV, the phone is buttons. That fa
 │                       │
 │   Eyes on the screen  │
 │                       │
-├───────────────────────┤
-│ 🔥 😂 💀 ❤️ 🤯 👏 😭 🎉│
+│                       │
 └───────────────────────┘
 ```
 
-### ROUND_RESULTS / SCOREBOARD
+### RESULTS
 
-Quiet. The TV is doing the talking; the phone just says how it went for *them*.
+The bar is back, and so are the standings. This is the phase people talk during — it is the one the
+reaction bar exists for.
+
+The phone shows the *whole* table rather than only their own line, because scrolling back to find
+your own name at your own pace is the thing the television can't offer. Movement comes from `rank`
+and `previousRank`; the list never auto-scrolls, since a thumb is already on it.
 
 ```
 ┌───────────────────────┐        ┌───────────────────────┐
 │  🦊 Ada          6 pts│        │  🦊 Ada          6 pts│
 ├───────────────────────┤        ├───────────────────────┤
+│  SCORES ARE IN        │        │  GAME OVER            │
+│  Next up — Riddles    │        │  Thanks for playing!  │
 │                       │        │                       │
-│         ✓             │        │      YOU'RE 1st       │
-│                       │        │                       │
-│        + 3            │        │        ▲ 2            │
-│    1st fastest        │        │                       │
-│                       │        │      6 points         │
-│                       │        │                       │
+│  1 🦊 Ada    ▲2    6  │        │  1 🦊 Ada          6  │
+│  2 🚀 Cy     ▲1    5  │        │  2 🚀 Cy           5  │
+│  3 🐙 Bo     ▼2    5  │        │  3 🐙 Bo           5  │
+│  4 🐸 Dee          2  │        │  4 🐸 Dee          2  │
+│                       │        │ ┌───────────────────┐ │
+│                       │        │ │  Join a new game  │ │
+│                       │        │ └───────────────────┘ │
 ├───────────────────────┤        ├───────────────────────┤
 │ 🔥 😂 💀 ❤️ 🤯 👏 😭 🎉│        │ 🔥 😂 💀 ❤️ 🤯 👏 😭 🎉│
 └───────────────────────┘        └───────────────────────┘
+        RESULTS                           FINAL
 ```
 
 ### Terminal states
@@ -519,8 +560,13 @@ A kicked phone shows "You're out" and stops reconnecting.
 
 ### Reaction bar
 
-Persistent, every phase, including the lobby and the podium. Eight buttons from `EMOJI_PALETTE`, not
-a keyboard.
+Eight buttons from `EMOJI_PALETTE`, not a keyboard. Present in `LOBBY`, `RESULTS` and `FINAL` —
+every phase the engine owns.
+
+**Absent during `GAME`,** and that is the point. Eight people mashing 🔥 under a question they are
+meant to be answering is a distraction the host cannot switch off, and the thumb zone is where a
+module's controls go. Mount the bar from the intermission scene and nowhere else, so it has no
+disabled state to get wrong: it is simply not in the tree at a moment it shouldn't be.
 
 Rate limit is server-side: 5/sec sustained, burst of 10, excess dropped **silently**. Don't show an
 error and don't disable the buttons — mashing is the point. Give each tap local feedback (a scale

@@ -1,4 +1,4 @@
-import { GameZone } from '../../components/GameZone';
+import { GameZone } from '../../components/host/GameZone';
 import { Dots } from '../../primitives/Dots';
 import type { EmojiFeed } from '../../components/EmojiStream';
 
@@ -15,7 +15,7 @@ import type { EmojiFeed } from '../../components/EmojiStream';
  * here would be the same number twice on one screen. The room is waiting until
  * the host decides it isn't, and that decision is a keypress, not a threshold.
  */
-export function LobbyScene({ feed }: { feed: EmojiFeed | null }) {
+export function HostLobbyScene({ feed }: { feed: EmojiFeed | null }) {
   return (
     <GameZone
       feed={feed}

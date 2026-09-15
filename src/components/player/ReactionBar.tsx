@@ -1,8 +1,17 @@
 import { useState } from 'react';
-import { EMOJI_PALETTE } from '../services/quizwizz';
+import type { CSSProperties } from 'react';
+import { EMOJI_PALETTE } from '../../services/quizwizz';
 
 /**
- * Eight buttons, every phase, including the lobby and the podium.
+ * One button per palette entry, every intermission — the lobby, the podium, and
+ * the breaks between games.
+ *
+ * **Not during a game.** It is the intermission scene that mounts this, and
+ * nothing else does: while a game is running the controls belong to the module,
+ * and a room mashing 🔥 under a question they are meant to be answering is a
+ * distraction the host has no way to switch off. Scoping the bar to the phases
+ * where reacting *is* the point makes that a property of the component tree
+ * rather than a rule somebody has to remember at each call site.
  *
  * The palette comes from the copied `config.ts` and is deliberately disjoint
  * from `AVATAR_EMOJI`, so a reaction floating up the screen never looks like
@@ -20,7 +29,13 @@ export function ReactionBar({ onReact }: { onReact: (emoji: string) => void }) {
   const [popped, setPopped] = useState<{ emoji: string; n: number } | null>(null);
 
   return (
-    <div className="reaction-bar">
+    // The column count comes from the palette, not from a number typed twice.
+    // `config.ts` is re-themed by editing that list, and a grid that assumed
+    // eight left four buttons stranded across half the bar the moment it did.
+    <div
+      className="reaction-bar"
+      style={{ '--reaction-count': EMOJI_PALETTE.length } as CSSProperties}
+    >
       {EMOJI_PALETTE.map(emoji => (
         <button
           key={`${emoji}-${popped?.emoji === emoji ? popped.n : 0}`}

@@ -1,0 +1,87 @@
+/* ============================================================
+   Awards — what the game just paid out
+   ============================================================
+   The `RESULTS` zone. One row per ledger entry: who, why, how much.
+
+   This is the screen that replaced ROUND_RESULTS and SCOREBOARD together. It
+   deliberately does *not* repeat the standings — those are in the left panel and
+   have been since the first phone joined, and putting them here too was exactly
+   what made SCOREBOARD redundant. What this adds is the thing no other screen
+   has: the reason attached to each number.
+
+   Read from three metres, so the reason is not fine print. */
+
+.awards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: min(100%, 900px);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.awards__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.awards__name {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Written by the module — "1st fastest", "survived". The only explanation the
+   room gets for a number, so it is quieter than the name but never small. */
+.awards__reason {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.awards__delta {
+  min-width: 3ch;
+  text-align: right;
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.awards__delta--gain {
+  color: var(--accent);
+}
+
+/* Narrow zones (a small host window) stack the reason under the name rather
+   than letting two ellipsised strings fight over one row. */
+@media (max-width: 900px) {
+  .awards__row {
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-md);
+  }
+
+  .awards__reason {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: left;
+  }
+}

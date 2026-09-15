@@ -3,9 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import HomePage from './features/home/HomePage';
-import LobbyPage from './features/lobby/LobbyPage';
-import JoinPage from './features/join/JoinPage';
-import PlayPage from './features/play/PlayPage';
+import HostPage from './features/host/HostPage';
+import JoinPage from './features/player/join/JoinPage';
+import PlayerPage from './features/player/PlayerPage';
 
 import './styles/index.css';
 
@@ -24,9 +24,9 @@ import './styles/index.css';
  */
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
-  { path: '/host', element: <LobbyPage /> },
+  { path: '/host', element: <HostPage /> },
   { path: '/play', element: <JoinPage /> },
-  { path: '/play/game', element: <PlayPage /> },
+  { path: '/play/game', element: <PlayerPage /> },
 ]);
 
 const container = document.getElementById('root');

@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Wordmark } from '../../components/Wordmark';
-import { RoomCode } from '../../components/RoomCode';
+import { Wordmark } from '../../../components/Wordmark';
+import { RoomCode } from '../../../components/RoomCode';
 import {
   NAME_MAX_LENGTH,
   clearPlayerIdentity,
   readPlayerIdentity,
   resetStore,
-} from '../../services/quizwizz';
-import { useJoin, useLiveSession } from '../../hooks/quizwizz';
-import { useViewMode } from '../../hooks/useViewMode';
+} from '../../../services/quizwizz';
+import { useJoin, useLiveSession } from '../../../hooks/quizwizz';
+import { useViewMode } from '../../../hooks/useViewMode';
 import { AvatarSlider } from './AvatarSlider';
 
 /**

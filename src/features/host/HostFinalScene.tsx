@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { Confetti } from '../../components/Confetti';
-import { GameZone } from '../../components/GameZone';
-import { Podium } from '../../components/Podium';
-import { rankPlayers } from '../../components/standings';
+import { Confetti } from '../../components/host/Confetti';
+import { GameZone } from '../../components/host/GameZone';
+import { Podium } from '../../components/host/Podium';
+import { byRank } from '../../components/standings';
 import type { EmojiFeed } from '../../components/EmojiStream';
 import type { PublicPlayer } from '../../services/quizwizz';
 
@@ -15,8 +15,8 @@ import type { PublicPlayer } from '../../services/quizwizz';
  * one screen. The top three are a *picture*; the rest are a list, and the layout
  * already has somewhere for each.
  */
-export function HostFinal({ players, feed }: { players: PublicPlayer[]; feed: EmojiFeed | null }) {
-  const top = useMemo(() => rankPlayers(players).slice(0, 3), [players]);
+export function HostFinalScene({ players, feed }: { players: PublicPlayer[]; feed: EmojiFeed | null }) {
+  const top = useMemo(() => byRank(players).slice(0, 3), [players]);
 
   return (
     <GameZone

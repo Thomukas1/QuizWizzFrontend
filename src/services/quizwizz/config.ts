@@ -35,7 +35,7 @@ export const CODE_ALPHABET = 'BCDFGHJKMNPQRSTVWXZ23456789';
 export const CODE_LENGTH = 4;
 
 /** Buttons, not a keyboard. */
-export const EMOJI_PALETTE: readonly string[] = ['🔥', '😂', '💀', '❤️', '🤯', '👏', '😭', '🎉'];
+export const EMOJI_PALETTE: readonly string[] = ['💖', '💀', '🏳️‍🌈', '🤪'];
 
 /**
  * Avatars — what a player picks on the join screen and what represents them on

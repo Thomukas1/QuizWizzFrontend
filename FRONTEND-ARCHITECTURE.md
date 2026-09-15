@@ -197,32 +197,33 @@ to be safe.
 | Event | To | Payload | Render |
 |---|---|---|---|
 | `session:snapshot` | both | the whole moment (see below) | Repaint everything |
-| `session:phase` | both | `{ phase, roundIndex, roundCount, deadline }` | Switch view; restart the timer |
-| `round:begin` | both | `{ roundId, gameId, title, rules? }` | Title card; preload the game's components |
-| `round:end` | both | `{ roundId }` | Tear down the game component |
-| `view:display` | **host** | `{ roundId, gameId, rev, state }` | Hand `state` to `<Display>` |
-| `view:player` | **player** | `{ roundId, gameId, rev, state }` | Hand `state` to `<Player>` |
-| `roster:update` | both | `{ players: PublicPlayer[] }` | Tiles, scoreboard, connection dots |
-| `answers:progress` | **host** | `{ answered: string[], total }` | "9 of 15 in" — ids only, never answers |
+| `session:phase` | both | `{ phase, gameIndex, gameCount, game, upNext }` | Switch scene; mount or tear down the module |
+| `view:display` | **host** | `ViewFrame` | Hand `state` to `<Display>` |
+| `view:player` | **player** | `ViewFrame` | Hand `state` to `<Player>` |
+| `roster:update` | both | `{ players: PublicPlayer[] }` | Tiles, standings, connection dots |
 | `react:burst` | **host** | `{ items: [{ playerId, emoji }] }` | Spawn particles |
 | `answer:ack` | player | `{ itemId, accepted, reason? }` | Confirm or unlock the UI |
-| `score:update` | both | `{ entries, totals }` | "+3 — 1st fastest" flyups |
+| `score:update` | both | `{ entries, totals }` | The `RESULTS` payout list |
 | `sync:pong` | both | `{ t0, tServer }` | Clock offset |
 | `kicked` | player | `{}` | See the no-retry table |
 | `error` | both | `{ reason, message }` | See the no-retry table |
 
-`PublicPlayer` is `{ id, name, avatar, connected, score }`.
+`PublicPlayer` is `{ id, name, avatar, connected, score, rank, previousRank }`. **Ranks come from
+the server** — 1-based, gapless, ties by join order — so no client works out its own placings and
+the movement arrows survive a reconnect. See [PHASE-REDESIGN.md](PHASE-REDESIGN.md) §3.2.
+
+`ViewFrame` is `{ runId, gameId, rev, state, deadline }`.
 
 `session:snapshot`:
 
 ```ts
 {
   sessionId, code,                    // the code goes on the TV
-  phase, roundIndex, roundCount,
-  deadline,                           // { startedAt, endsAt } | null
-  round,                              // { roundId, gameId, title, rules? } | null
+  phase, gameIndex, gameCount,
+  game,                               // { runId, gameId, title } | null
+  upNext,                             // { gameId, title } | null — null means FINAL is next
   players,                            // PublicPlayer[]
-  view,                               // this client's own ViewFrame | null
+  view,                               // this client's own ViewFrame | null — and its deadline
   you,                                // { playerId, name, avatar, score } | null — players only
   tServer,
 }
@@ -231,8 +232,10 @@ to be safe.
 **`rev` is monotonic across the whole session.** Keep the last `rev` you rendered and drop any frame
 with a lower one. Frames are always complete — never patches — so a dropped frame costs nothing.
 
-**There is exactly one deadline at a time**, and it always arrives on `session:phase` (or the
-snapshot). A game module arming its own round timer causes another `session:phase`. One timer
+**There is exactly one deadline at a time**, and it lives on `ViewFrame` — not on the phase. A game
+runs its intro, its questions and its reveals inside one `GAME` phase, so a deadline attached to the
+phase could only be set once per game; on the frame it is per-step, and it inherits the stale-frame
+rule for free. `LOBBY`, `RESULTS` and `FINAL` are host-paced and have no deadline at all. One timer
 component, one source.
 
 ### Client → server
@@ -241,12 +244,13 @@ component, one source.
 |---|---|---|
 | `sync:ping` | both | `{ t0 }` |
 | `player:react` | player | `{ emoji }` — must be from `EMOJI_PALETTE` |
-| `player:answer` | player | `{ roundId, itemId, choice }` |
-| `player:input` | player | `{ roundId, seq, type, payload? }` — minigames |
+| `player:answer` | player | `{ runId, itemId, choice }` |
+| `player:input` | player | `{ runId, seq, type, payload? }` — minigames |
 | `host:command` | host | `{ cmd, args }` |
 
-Always include the current `roundId`; a submission for a finished round comes back as
-`answer:ack { accepted: false, reason: 'stale_round' }`.
+Always include the current `runId` — one playthrough of one game, straight off the frame that
+projected the controls. A submission for a finished game comes back as
+`answer:ack { accepted: false, reason: 'stale_run' }`.
 
 A phone sending `host:command` gets `error wrong_role`. The role is bound to the token, so there is
 nothing to spoof — but don't ship the host bundle to `/play` either.
@@ -255,14 +259,14 @@ nothing to spoof — but don't ship the host bundle to `/play` either.
 
 One envelope for all of them. `next` is the spacebar and 90% of the interaction.
 
+Only these belong to the engine. **Anything else is forwarded to the running module verbatim**, so a
+game can define `lock`, `revealStep`, `pause` or whatever it likes without touching the protocol.
+
 | `cmd` | `args` | Notes |
 |---|---|---|
 | `next` | — | Advance. **Bind to Space.** |
-| `start` | — | LOBBY only; same as `next` there |
-| `back` | — | Only meaningful from `ROUND_INTRO`→LOBBY and `SCOREBOARD`→`ROUND_RESULTS`; otherwise `not_allowed` |
-| `skipRound` | — | Leaves the round unscored |
-| `jumpTo` | `{ roundIndex }` | Deep-link into round N. Invaluable when testing |
-| `extendTimer` | `{ byMs }` | Defaults to +15s. For when someone's phone dropped |
+| `skipGame` | — | Force-ends the running game with **no awards**, without asking the module. The escape hatch |
+| `jumpTo` | `{ gameIndex }` | Deep-link into game N. Invaluable when testing |
 | `adjustScore` | `{ playerId, delta, reason }` | Writes an auditable ledger row |
 | `kick` | `{ playerId }` | |
 | `rename` | `{ playerId, name }` | |
@@ -273,11 +277,14 @@ A refused command arrives as `error { reason }` — `wrong_phase`, `not_allowed`
 `unknown_game`, `malformed_payload`, `unknown_player`. Show it as a toast in the corner; you'll be
 operating this while talking to a room.
 
-**A game module gets first refusal on every command.** If the active round claims `next` — a
-multi-step reveal does exactly this — the phase does not advance and you get a fresh `view:display`
-instead. That is deliberate: it keeps Space as the only key. It also means `lock`, `revealStep`,
-`pause` and `resume` are only accepted while a round implements them, and otherwise come back
-`unknown_command`.
+**During `GAME` the module gets every command first.** If it claims `next` — a multi-step reveal
+does exactly this — the phase does not advance and you get a fresh `view:display` instead. That is
+what keeps Space as the only key.
+
+**An unclaimed command during `GAME` is refused `not_allowed`.** The engine has no `next` behaviour
+while a game is running, and a game that ends because its module forgot to claim a key is a game
+that ends early in front of the room. A game ends when it calls `finish(awards)` and at no other
+time; `skipGame` is the escape hatch that makes refusing the rest safe.
 
 ---
 
@@ -296,9 +303,15 @@ export const GAMES: Record<string, GameComponents> = {
 };
 ```
 
-Both views look the component up by `gameId` from `round:begin` / `view:*` and render it inside the
-phase shell. An unknown `gameId` renders a placeholder, never a crash — the server refuses unknown
-games when the playlist is set, so this only happens mid-development.
+Both views look the component up by `view.gameId` and render it inside the `GAME` shell. An unknown
+`gameId` renders a placeholder, never a crash — the server refuses unknown games when the playlist
+is set, so this only happens mid-development.
+
+**A module owns the whole of `GAME`** — its title card, its rules screen, its play and its reveal.
+The engine used to own three of those as separate phases and hand over only the middle one, which
+meant every format had to be shaped like a quiz. It owns all of them now, and that is the point:
+`rules?: string` is gone because one paragraph of plain text was never going to open a drawing round
+and a buzzer race.
 
 The props are fixed, so a game never touches the socket or the clock:
 
@@ -306,7 +319,7 @@ The props are fixed, so a game never touches the socket or the clock:
 interface DisplayProps<S> {
   state: S;                       // the toDisplay projection
   players: PublicPlayer[];
-  deadline: Deadline | null;
+  deadline: Deadline | null;      // this step's, off the frame. null = untimed
   serverNow: () => number;
 }
 
@@ -353,15 +366,19 @@ Break one of these and it fails on game night rather than in development.
 
 - **Never type an event name, reason, or emoji list.** Import from the copied `protocol.ts` /
   `config.ts`.
-- **Never compute a score.** Totals arrive in `roster:update` and `score:update`. A client-held score
-  is a client-editable score.
+- **Never compute a score, and never compute a rank.** Both arrive on `PublicPlayer`, folded by the
+  server from its own ledger. A client-held score is a client-editable score, and this runs on the
+  guests' own phones.
+- **`phase === 'GAME'` is the only phase test either view makes.** Three phases belong to the engine
+  and one belongs to a module; anything finer — a table of phase kinds, an `isIntermission()` — is
+  the client re-deriving something the phase already says.
 - **`localStorage` holds identity only** — token, playerId, and the host token. Nothing else. It is
   not a cache of game state.
 - **Drop stale frames by `rev`.** Frames are complete; never merge them.
 - **A phone renders `view:player` and nothing else.** If a design needs data the phone doesn't have,
   that is the server's `toPlayer` to change — not something to infer. The correct answer is *absent*
   from the payload before the reveal, not hidden in it.
-- **One deadline, one timer component**, driven by `serverNow()`.
+- **One deadline, one timer component**, read off `view.deadline` and driven by `serverNow()`.
 - **Re-authenticate on every connect** and repaint from the snapshot. No resume protocol.
 - **Don't retry a refusal** from the no-retry table in §3.
 - **One `<Avatar>` component.** Nothing else looks inside an avatar.

@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AdminPanel } from '../../components/AdminPanel';
+import { AdminPanel } from '../../components/host/AdminPanel';
 import type { EmojiFeed } from '../../components/EmojiStream';
-import { GameZone } from '../../components/GameZone';
 import { Leaderboard } from '../../components/Leaderboard';
-import { rankPlayers } from '../../components/standings';
+import { byRank } from '../../components/standings';
 import { clearHostToken, readHostToken, resetStore } from '../../services/quizwizz';
 import { useHostCommand, useQuizWizz, useSpaceToAdvance } from '../../hooks/quizwizz';
 import { useViewMode } from '../../hooks/useViewMode';
-import { HostFinal } from '../final/HostFinal';
-import { LobbyScene } from './LobbyScene';
+import { HostFinalScene } from './HostFinalScene';
+import { HostLobbyScene } from './HostLobbyScene';
+import { HostGameScene } from './HostGameScene';
+import { HostResultsScene } from './HostResultsScene';
 
 /**
  * **The television.** The host connection, the show, and the only client allowed
@@ -18,8 +19,15 @@ import { LobbyScene } from './LobbyScene';
  * Three slices, fixed all evening: an empty panel, the game zone, the
  * leaderboard. Only the zone changes, which is why the leaderboard never
  * re-mounts and never loses its scroll position when the phase moves.
+ *
+ * Everything it draws with is host-shaped and lives in `components/host/` — the
+ * game zone, the remote, the QR panel, the podium, the confetti. Nothing here
+ * imports from `components/player/`, and nothing on the phone imports from
+ * here: a screen read from three metres and a screen held in a hand have almost
+ * nothing in common, and the handful of things that genuinely do — an avatar, a
+ * row of standings, an emoji rising — sit at the root of `components/`.
  */
-export default function LobbyPage() {
+export default function HostPage() {
   useViewMode('host');
 
   const location = useLocation();
@@ -65,7 +73,7 @@ export default function LobbyPage() {
     [state.burst],
   );
 
-  const standings = useMemo(() => rankPlayers(state.players), [state.players]);
+  const standings = useMemo(() => byRank(state.players), [state.players]);
 
   // A refused command, for three seconds in the corner. The store hands over a
   // fresh object per refusal, so an identical repeat still restarts the timer.
@@ -104,24 +112,37 @@ export default function LobbyPage() {
         {standings.length === 0 ? (
           <p className="host-stage__panel-empty">Nobody yet</p>
         ) : (
-          // Medals are withheld in the lobby: every score is zero there, so the
-          // order is join order, and a gold border on whoever scanned first
-          // would be a podium the game hasn't played yet.
-          <Leaderboard rows={standings} size="lg" autoScroll medals={!inLobby} />
+          // Medals and movement are both withheld in the lobby: every score is
+          // zero there, so the order is join order, and a gold border on
+          // whoever scanned first would be a podium the game hasn't played yet.
+          //
+          // **This is what replaced the SCOREBOARD phase.** It is on screen from
+          // the first join to the podium, so a phase whose only job was to show
+          // it was showing the same list twice.
+          <Leaderboard rows={standings} size="lg" autoScroll medals={!inLobby} movement={!inLobby} />
         )}
       </aside>
 
-      {/* Every scene renders in here, including a game's <Display> when there
-          is one. A blank zone mid-party reads as broken, so every phase has
-          something. */}
-      {inLobby ? (
-        <LobbyScene feed={feed} />
+      {/*
+        Four phases, four scenes, and `GAME` is the only one the engine doesn't
+        draw. A blank zone mid-party reads as broken to a room of fifteen at
+        once, so every phase has something — including the beat before a game's
+        first frame lands, which `<HostGameScene>` handles itself.
+      */}
+      {state.phase === 'GAME' ? (
+        <HostGameScene view={state.view} players={state.players} feed={feed} />
+      ) : state.phase === 'RESULTS' ? (
+        <HostResultsScene
+          game={state.game}
+          upNext={state.upNext}
+          entries={state.scores?.entries ?? []}
+          players={state.players}
+          feed={feed}
+        />
       ) : state.phase === 'FINAL' ? (
-        <HostFinal players={state.players} feed={feed} />
+        <HostFinalScene players={state.players} feed={feed} />
       ) : (
-        <GameZone feed={feed} top={<h2 className="game-zone__title">{state.phase}</h2>}>
-          <p className="subtle">{state.round?.title ?? 'Coming up…'}</p>
-        </GameZone>
+        <HostLobbyScene feed={feed} />
       )}
 
       <aside className="host-stage__panel host-stage__panel--right">

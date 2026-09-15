@@ -1,0 +1,32 @@
+/* ============================================================
+   Player game — a module has the phone
+   ============================================================
+   The `GAME` phase, and the only scene the engine doesn't draw. It is a frame
+   and nothing else: full height, no padding of its own beyond a gutter, and no
+   opinion about what goes inside it.
+
+   **Nothing along the bottom edge.** That empty thumb zone is the point — it is
+   where a module's controls land, and leaving it clear here means a game never
+   has to fight a reaction bar for the part of a phone a thumb can actually
+   reach. The bar is in `player-intermission.css`, mounted only between games. */
+
+.player-game {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg);
+  /* Tap targets are tapped, not clicked. Belt and braces with the global rule —
+     a module's own buttons inherit this without having to know about it. */
+  touch-action: manipulation;
+}
+
+/* The beat before the first frame lands, and the unbuilt-game placeholder. Both
+   are centred statements rather than controls, so they don't inherit the frame's
+   top alignment. */
+.player-game--waiting {
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  text-align: center;
+}

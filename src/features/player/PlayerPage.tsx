@@ -1,23 +1,28 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Avatar } from '../../components/Avatar';
-import { EmojiStream } from '../../components/EmojiStream';
-import type { EmojiFeed } from '../../components/EmojiStream';
-import { ReactionBar } from '../../components/ReactionBar';
+import { PlayerHeader } from '../../components/player/PlayerHeader';
 import { clearPlayerIdentity, readPlayerIdentity, resetStore } from '../../services/quizwizz';
 import { usePlayerActions, useQuizWizz } from '../../hooks/quizwizz';
 import { useViewMode } from '../../hooks/useViewMode';
-import { PlayerFinal } from '../final/PlayerFinal';
+import { PlayerGame } from './PlayerGame';
+import { PlayerIntermission } from './PlayerIntermission';
 
 /**
  * **The controller.** Slim, no sound, no animation past button feedback — the
  * television is the show and this is a gamepad.
  *
- * Three rows in every phase: who you are, the phase, the reactions. Only the
- * middle one changes, so the identity strip and the reaction bar never move
- * between screens.
+ * The shell is two things and one decision: the header, which never moves, and
+ * the scene below it, which is either an intermission or a round. It owns no
+ * layout of its own beyond that, and in particular it no longer owns the
+ * reaction bar — the bar belongs to the intermission, which is the whole of what
+ * "reactions only between games" means in this codebase.
+ *
+ * Everything host-shaped is somewhere else. Nothing on this route imports from
+ * `components/host/`, and nothing there imports from here; the two views share
+ * only what is genuinely the same object on both screens — an avatar, a row of
+ * standings, an emoji floating upwards.
  */
-export default function PlayPage() {
+export default function PlayerPage() {
   useViewMode('player');
 
   const navigate = useNavigate();
@@ -26,18 +31,9 @@ export default function PlayPage() {
   // the phone to the join form before it could say why it stopped.
   const identity = useMemo(() => readPlayerIdentity(), []);
   const state = useQuizWizz(identity ? 'player' : null);
-  const { react } = usePlayerActions(state.round?.roundId ?? null);
-
-  /**
-   * Local pops, not the server's burst.
-   *
-   * A phone shows its *own* taps immediately — the round trip through
-   * `react:burst` is 100ms of batching plus the network, and a button that
-   * waits that long to respond feels broken. The server's bursts go to the
-   * television, which is where they mean something: they are the room's
-   * reaction, not your own.
-   */
-  const [feed, setFeed] = useState<EmojiFeed | null>(null);
+  // Bound to the frame's `runId`, not the phase's game: a submission is pinned
+  // to the exact playthrough that projected the controls it was typed into.
+  const { react, answer, input } = usePlayerActions(state.view?.runId ?? null);
 
   // Drop the pass and start over. `resetStore` matters as much as the token: the
   // store's rev high-water mark is module-scope, and carrying it into the next
@@ -50,32 +46,28 @@ export default function PlayPage() {
 
   if (!identity) return <Navigate to="/play" replace />;
 
-  const you = state.you;
-  const isFinal = state.phase === 'FINAL';
+  /**
+   * **The one branch this page makes.** `GAME` means a module owns the screen;
+   * anything else means the engine does. There is no table and no predicate —
+   * the question "is a round happening" *is* the phase.
+   *
+   * An ending overrides it regardless of the phase it stopped on: a kicked
+   * player is not mid-game whatever the last frame said, and a dead controller
+   * is worse than the standings and a way out.
+   */
+  const playing = state.phase === 'GAME' && !state.ending;
 
   return (
-    <div className="phone-shell">
-      <header className="phone-shell__identity">
-        {you ? (
-          <>
-            <Avatar avatar={you.avatar} size={40} seed={you.playerId} />
-            <span className="phone-shell__name">{you.name}</span>
-            <span className="phone-shell__score">
-              {you.score}<span>pts</span>
-            </span>
-          </>
-        ) : (
-          <span className="subtle text-sm">Connecting…</span>
-        )}
-      </header>
+    <div className="player-shell">
+      <PlayerHeader you={state.you} />
 
       {state.ending ? (
-        <div className="phone-shell__status phone-shell__status--error">
+        <div className="player-shell__status player-shell__status--error">
           <span>{state.ending.message}</span>
           {/* Every ending is final for this pass — kicked, expired, or the game
               simply over — so there is exactly one thing left to offer. Without
               it the phone is a dead end with no route back to a running game. */}
-          <button type="button" className="phone-shell__status-action" onClick={leave}>
+          <button type="button" className="player-shell__status-action" onClick={leave}>
             Join a new game
           </button>
         </div>
@@ -83,43 +75,24 @@ export default function PlayPage() {
         // True, and worth saying: a disconnect never removes anyone from the
         // roster and never discards a submitted answer. It stops people
         // frantically reloading, which is what actually loses their place.
-        <p className="phone-shell__status phone-shell__status--warn">
+        <p className="player-shell__status player-shell__status--warn">
           Reconnecting… your answers are safe
         </p>
       ) : null}
 
-      <main className={`phone-shell__phase${isFinal ? ' phone-shell__phase--fill' : ''}`}>
-        {/* Behind the content and clipped to this row, so a reaction rises out
-            from under the bar and stops before it reaches your own name. */}
-        <EmojiStream feed={feed} variant="overlay" />
-
-        {isFinal ? (
-          <PlayerFinal players={state.players} onLeave={leave} />
+      <main className="player-shell__scene">
+        {playing ? (
+          <PlayerGame view={state.view} you={state.you} answer={answer} input={input} />
         ) : (
-          <div className="phone-shell__waiting">
-            {state.phase === 'LOBBY' || state.phase === null ? (
-              <>
-                <p className="phone-shell__waiting-title">You're in</p>
-                {you && <Avatar avatar={you.avatar} size={96} seed={you.playerId} />}
-                <p className="subtle">Waiting for players…</p>
-                <p className="subtle text-sm">
-                  {state.players.length} {state.players.length === 1 ? 'player' : 'players'} in —
-                  look at the big screen.
-                </p>
-              </>
-            ) : (
-              <p className="phone-shell__waiting-title">{state.round?.title ?? state.phase}</p>
-            )}
-          </div>
+          <PlayerIntermission
+            phase={state.phase}
+            players={state.players}
+            upNext={state.upNext}
+            onReact={react}
+            onLeave={leave}
+          />
         )}
       </main>
-
-      <ReactionBar
-        onReact={emoji => {
-          react(emoji);
-          setFeed(current => ({ seq: (current?.seq ?? 0) + 1, emojis: [emoji] }));
-        }}
-      />
     </div>
   );
 }

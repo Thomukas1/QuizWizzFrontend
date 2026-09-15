@@ -1,9 +1,14 @@
 /* ============================================================
-   Reaction bar — eight buttons, every phase, phone only
+   Reaction bar — one button per palette entry, every intermission, phone only
    ============================================================
-   Buttons, not a keyboard. Present in the lobby and on the podium alike: the
-   thing a guest can always do is react, and taking that away between rounds is
-   what makes a party app feel dead.
+   Buttons, not a keyboard. Present in the lobby, on the podium, and in whatever
+   break sits between two games: the thing a guest can always do while nothing is
+   being asked of them is react, and a party app with nothing to press between
+   rounds feels dead.
+
+   Absent during a round, and that is the point — see `player-intermission.css`.
+   The bar is mounted by the intermission scene alone, so there is no disabled
+   state here and never will be.
 
    The rate limit is the server's (5/sec sustained, burst of 10) and excess is
    dropped silently. So: no error, no disabled state, no cooldown here. Mashing
@@ -14,7 +19,9 @@
   bottom: 0;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  /* Set by the component from EMOJI_PALETTE.length — re-theming the palette
+     in config.ts must not leave a grid sized for the old one. */
+  grid-template-columns: repeat(var(--reaction-count, 8), 1fr);
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-sm) calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
   background: var(--bg-surface);
@@ -23,8 +30,8 @@
 }
 
 .reaction-bar__button {
-  /* Overrides the global button padding — these are square targets in a row of
-     eight across 430px, so horizontal padding has to come from the grid. */
+  /* Overrides the global button padding — these are square targets sharing one
+     row across 430px, so horizontal padding has to come from the grid. */
   padding: 0;
   min-height: 52px;
   display: grid;

@@ -38,8 +38,18 @@ repaint. That is why nothing is cached and there is no resume protocol.
 - **`src/hooks/<domain>/`** — hook per job, grouped like `services/`, with a same-named barrel.
   Import through the barrel, never the file. `useResource.ts` and `useViewMode.ts` sit at the root
   because they belong to no domain.
-- **`src/features/<route>/`** — one folder per route: the page plus its own components.
-- **`src/components/`** — shared blocks richer than a primitive, and anything two features need.
+- **`src/features/host/` and `src/features/player/`** — one folder per *view*, not per route. The
+  host is `/host`; the player is `/play` (the door, in `player/join/`) and `/play/game`. Each holds
+  a page and the scenes it switches between. `features/home/` is the one exception and is neither:
+  the `/` password gate renders `auto` because the host might open it from a phone.
+- **`src/components/host/` and `src/components/player/`** — blocks that only one view can use. A
+  game zone, a QR panel, a podium and confetti are three metres away; a reaction bar and the
+  identity header are in a hand. Neither folder may import from the other, and no page may import
+  across the seam — if something is reaching over it, it belongs one level up.
+- **`src/components/`** (the root) — only what is genuinely the same object on both screens:
+  `<Avatar>`, `<Leaderboard>`, `<EmojiStream>`, `<RoomCode>`, `<Wordmark>`, `standings.ts`. The bar
+  for putting something here is that a television and a phone want *the same component*, not merely
+  a similar one; two props of divergence is the most that should ever be needed to bridge them.
 - **`src/primitives/`** — presentation only, no domain shape. If it encodes a product concept, it
   is a `components/` block.
 - **`src/games/registry.ts`** — the round formats. Empty so far; see "Adding a game" below.
@@ -76,12 +86,54 @@ there are no breakpoints.
   admin panel. Only the middle changes, which is why the panels never re-mount. Every scene renders
   through `<GameZone>` (a line at the top, the thing in the middle, a line at the bottom) so a scene
   supplies content and never layout. Design for three metres away.
-- **`player`** — a 430px strip, full height, tap-tuned. Identity strip, phase, reaction bar; only
-  the middle changes. Design it like a gamepad, not a screen someone watches.
+- **`player`** — a 430px strip, full height, tap-tuned. A `<PlayerHeader>` that never moves, an
+  occasional status strip, and one scene below. Design it like a gamepad, not a screen someone
+  watches.
 - **`auto`** — centred, for the one screen that must read on both.
 
 **One `<Avatar>` component.** It is the only thing allowed to look inside an avatar, because the
 wire type is a tagged union and photos are a planned second member.
+
+## The four phases
+
+```
+LOBBY → GAME → RESULTS →┐        LOBBY    engine — waiting to start
+          ↑              │        GAME     the module — a whole game, end to end
+          └──────────────┤        RESULTS  engine — the awards land, "next up X"
+                         ↓        FINAL    engine — podium
+                       FINAL
+```
+
+**`phase === 'GAME'` is the only branch either view makes.** Three phases belong to the engine and
+one belongs to a module; that is the whole distinction, and it is a string equality test. There is
+deliberately no `isIntermission()` helper and no table of phase kinds — the question "is a round
+happening" *is* the phase.
+
+- **`GAME`** → `<PlayerGame>` / `<HostGameScene>`: look the module up by `view.gameId` and hand it
+  the frame. **No reaction bar on the phone** — eight people mashing 🔥 under a question they are
+  meant to be answering is a distraction the host cannot switch off.
+- **anything else** → `<PlayerIntermission>` / the engine's own host scenes: standings, and the
+  reaction bar is back.
+
+`<ReactionBar>` is mounted by `<PlayerIntermission>` and by nothing else, so "no reactions during
+play" is a fact of the component tree rather than a rule to remember.
+
+**A game owns its own intro, rules and reveal.** That is why `ROUND_INTRO` and `ROUND_RESULTS` are
+gone: one `rules?: string` was never going to serve a drawing round and a buzzer race. `SCOREBOARD`
+is gone because the standings are in the host's left panel from the first join to the podium.
+
+**The deadline rides on `ViewFrame`, not on the phase** (`state.view.deadline`). A game runs its
+intro, its questions and its reveals inside one `GAME` phase, so a deadline hung off the phase could
+only be set once per game. One frame at a time still means one deadline at a time, and `rev` already
+protects it.
+
+**The server ranks; we only sort.** `rank` and `previousRank` arrive on every `PublicPlayer` —
+`components/standings.ts` orders by them and never computes them. That is what replaced diffing the
+last `totals` we saw, which produced no movement arrows at all for a phone that reconnected
+mid-animation.
+
+⚠️ `protocol.ts` here is **ahead of the server** — see `PHASE-REDESIGN.md`, which is the spec the
+server has to apply. Until it does, the client will not talk to it, and the failure is silence.
 
 ## Adding a game
 

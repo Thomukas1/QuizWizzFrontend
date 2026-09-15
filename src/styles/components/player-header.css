@@ -32,19 +32,37 @@
   white-space: nowrap;
 }
 
-.player-header__score {
+/* ── Quit ───────────────────────────────────────────────────────────────────
+   The right-hand slot, where the score used to be. Deliberately the quietest
+   thing in the strip: it is on screen all evening and it is not what anybody
+   came here to press. Muted outline at rest, and the *only* colour it ever
+   takes is the armed one — which is the point, because coral in this app means
+   exactly one thing and this is the moment it means it. */
+.player-header__quit {
   margin-left: auto;
   flex-shrink: 0;
+  /* Overrides the global button padding. This is a header chip, not a thumb
+     target: at `--space-lg --space-2xl` it would set the height of the one
+     strip every other measurement on the phone hangs off. */
+  padding: var(--space-xs) var(--space-md);
   font-family: var(--font-accent);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  /* The label swaps between two words of different widths, so the box is held
+     wide enough for the longer one — a button that jumps sideways under the
+     thumb that armed it is a button that gets mis-tapped. */
+  min-width: 5.5em;
+  text-align: center;
 }
 
-.player-header__score span {
-  font-family: var(--font-body);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-normal);
-  color: var(--text-muted);
-  margin-left: var(--space-xs);
+.player-header__quit--armed {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: var(--white);
 }

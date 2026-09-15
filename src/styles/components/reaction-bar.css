@@ -14,13 +14,20 @@
    dropped silently. So: no error, no disabled state, no cooldown here. Mashing
    is the point — every tap gets its local pop whether or not it made it. */
 
+/* The bottom row of a frame, not something stuck to a scrolling page. `sticky`
+   was doing the job by accident and only while the page was short enough — the
+   scene above it now owns the scrolling, so the bar is simply the last flex item
+   and cannot move. `relative` + `z-index` only so the shadow falls over the
+   stage rather than under it. */
 .reaction-bar {
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
+  position: relative;
   z-index: 2;
   display: grid;
-  /* Set by the component from EMOJI_PALETTE.length — re-theming the palette
-     in config.ts must not leave a grid sized for the old one. */
+  /* Set by the component from the length of the bar the *server* sent. Two
+     things change it: re-theming the palette in the server's config, and a
+     player whose avatar can't be sent as an emoji getting one button fewer.
+     A grid with a hardcoded count strands the difference across half the bar. */
   grid-template-columns: repeat(var(--reaction-count, 8), 1fr);
   gap: var(--space-xs);
   padding: var(--space-sm) var(--space-sm) calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
@@ -49,6 +56,20 @@
 .reaction-bar__button:active {
   transform: scale(0.86);
   background: var(--brand);
+}
+
+/* ── Your own face ──────────────────────────────────────────────────────────
+   First in the row and the only button here with a colour. The palette four are
+   things the room feels; this one is *you*, so it reads as a different kind of
+   thing rather than a fifth mood. Brand blue and an accent edge — lime is
+   rationed in this app, and a single hairline is all this is worth spending. */
+.reaction-bar__button--mine {
+  background: var(--brand);
+  border-color: var(--accent);
+}
+
+.reaction-bar__button--mine:active {
+  background: var(--accent);
 }
 
 /* The tap pop. Keyed by a counter on the element so an identical repeat tap

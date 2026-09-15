@@ -4,26 +4,47 @@
    A swipeable rail rather than the full grid, so the picker costs one thumb
    gesture and no vertical space on a phone.
 
-   **Scrolling is not choosing.** The centred item is only highlighted; it is
-   selected by tapping it. That is deliberate: the server refuses a join with no
-   avatar rather than defaulting one, precisely so that a picker which quietly
-   pre-selects can't give fifteen people the same face. Swiping past something
-   is not the same as picking it. */
+   **Scrolling IS choosing.** The rail snaps, two marks stand permanently in the
+   middle of it, and whatever lands between them is what you picked. There is no
+   tap to confirm and therefore no line of text explaining one: the bracket is
+   the instruction. The centred face turns accent-green and picks up a ring
+   floating off its edge; every other face stays white, which is the difference
+   readable at arm's length and at a glance. */
 
 .avatar-slider {
+  /* One tile, border and all. Everything else on the rail — and the bracket
+     around it — is derived from it, so the scale of the picker is this one
+     number. At 108px a phone shows the centred face and both its neighbours:
+     enough to read as a rail you swipe, and big enough that the face you are
+     choosing is the thing you are looking at rather than one of six thumbnails. */
+  --avatar-slider-item: 108px;
+  position: relative;
+}
+
+.avatar-slider__rail {
+  /* The offset parent the centring maths measures against. */
+  position: relative;
   display: flex;
-  gap: var(--space-md);
+  /* Wide enough that the bracket's two marks have an empty channel to stand in
+     rather than landing on the neighbouring faces. */
+  gap: var(--space-2xl);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   /* The rail runs edge to edge, but the first and last items still have to be
      able to reach the middle. */
-  padding: var(--space-md) calc(50% - 34px);
+  padding: var(--space-lg) calc(50% - var(--avatar-slider-item) / 2);
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
+  /* The edges fade out, so the rail reads as continuing rather than ending.
+     A mask rather than two gradient overlays: an overlay has to be painted in
+     the page's background colour, which was only ever right while the rail sat
+     on `--bg-primary`. This fades whatever is actually behind it. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
 }
 
-.avatar-slider::-webkit-scrollbar {
+.avatar-slider__rail::-webkit-scrollbar {
   display: none;
 }
 
@@ -36,45 +57,68 @@
   background: transparent;
   border: 2px solid transparent;
   border-radius: var(--radius-lg);
-  transition: transform var(--transition-base), border-color var(--transition-base);
+  /* The rail leans away from the bracket rather than the chosen face swelling
+     out of it — growing the centre is what pushed the ring into the marks. */
+  transform: scale(0.9);
+  transition: transform var(--transition-base);
 }
 
-/* Selection is a ring, not a colour change — a colour change gets lost behind
-   the emoji sitting on top of it. */
+/* Every face that isn't chosen. White rather than the generated hue `<Avatar>`
+   grounds a player in: in here the colour is answering one question — which one
+   is picked — and forty hues answer it forty ways. The hue comes back the
+   moment the face is on a scoreboard. */
+.avatar-slider__option .avatar {
+  background: var(--white);
+  transition: background var(--transition-base);
+}
+
+/* Under the bracket. Green ground, and a ring floating clear of the tile —
+   the ring is offset rather than flush so it survives the emoji sitting on top
+   of the colour. */
 .avatar-slider__option--selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(182, 248, 51, 0.25);
-  transform: scale(1.08);
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+  transform: scale(1);
 }
 
-.avatar-slider__hint {
-  text-align: center;
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
+.avatar-slider__option--selected .avatar {
+  background: var(--accent);
 }
 
-/* The rail edges fade out, so it reads as continuing rather than ending. */
-.avatar-slider-frame {
-  position: relative;
+/* ── The bracket ────────────────────────────────────────────────────────────
+   Two marks, fixed in the middle of the rail, that say where the choice is
+   made. They belong to the slider and not to the rail, so the rail's edge fade
+   leaves them alone. */
+.avatar-slider__bracket {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* The tile, plus the room its selected ring needs, plus the marks' own width
+     — which lands them in the gap between the centred face and its neighbour. */
+  width: calc(var(--avatar-slider-item) + var(--space-2xl) + var(--space-md));
+  height: calc(var(--avatar-slider-item) + var(--space-lg));
+  pointer-events: none;
 }
 
-.avatar-slider-frame::before,
-.avatar-slider-frame::after {
+.avatar-slider__bracket::before,
+.avatar-slider__bracket::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 42px;
-  pointer-events: none;
-  z-index: 1;
+  width: 10px;
+  border: 2px solid var(--accent);
 }
 
-.avatar-slider-frame::before {
+.avatar-slider__bracket::before {
   left: 0;
-  background: linear-gradient(to right, var(--bg-primary), rgba(5, 22, 72, 0));
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
-.avatar-slider-frame::after {
+.avatar-slider__bracket::after {
   right: 0;
-  background: linear-gradient(to left, var(--bg-primary), rgba(5, 22, 72, 0));
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }

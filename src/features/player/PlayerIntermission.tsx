@@ -4,7 +4,7 @@ import type { EmojiFeed } from '../../components/EmojiStream';
 import { Leaderboard } from '../../components/Leaderboard';
 import { ReactionBar } from '../../components/player/ReactionBar';
 import { byRank } from '../../components/standings';
-import type { GameRef, Phase, PublicPlayer } from '../../services/quizwizz';
+import type { GameRef, Phase, PublicPlayer, ReactionOption } from '../../services/quizwizz';
 
 /**
  * **Everything that isn't a game.** `LOBBY`, `RESULTS` and `FINAL` — the three
@@ -21,6 +21,9 @@ import type { GameRef, Phase, PublicPlayer } from '../../services/quizwizz';
  * reacting is the point makes "no reactions during play" a fact of the component
  * tree rather than a rule to remember.
  *
+ * What is *in* that bar is the server's business, not this scene's: `reactions`
+ * arrives on the snapshot already composed and goes straight through.
+ *
  * No podium and no confetti. The television is doing the celebrating, and a
  * phone competing with it splits the room's attention at the one moment it was
  * all pointed the same way. What the phone offers instead is the thing the TV
@@ -31,6 +34,8 @@ import type { GameRef, Phase, PublicPlayer } from '../../services/quizwizz';
 interface PlayerIntermissionProps {
   phase: Phase | null;
   players: PublicPlayer[];
+  /** `snapshot.reactions`, straight through to the bar. Not assembled here. */
+  reactions: ReactionOption[];
   /** What `RESULTS` announces. Null means the podium is next. */
   upNext: GameRef | null;
   onReact: (emoji: string) => void;
@@ -41,8 +46,14 @@ interface PlayerIntermissionProps {
 /**
  * What the room is waiting for. `null` is the beat before the first snapshot
  * lands, which reads as the lobby because that is where it almost always is.
+ *
+ * The note is optional, and the lobby is the phase that goes without one. It had
+ * a greeting and an instruction, and both were wrong: the header already says
+ * who you are, and a phone telling fifteen people in one room to look at the
+ * television they are already looking at is a line nobody reads twice. What is
+ * under it is the standings, so the heading says so and gets out of the way.
  */
-function headingFor(phase: Phase | null, upNext: GameRef | null): { title: string; note: string } {
+function headingFor(phase: Phase | null, upNext: GameRef | null): { title: string; note?: string } {
   if (phase === 'FINAL') return { title: 'Game over', note: 'Thanks for playing!' };
   if (phase === 'RESULTS') {
     return {
@@ -52,12 +63,13 @@ function headingFor(phase: Phase | null, upNext: GameRef | null): { title: strin
       note: upNext ? `Next up — ${upNext.title}` : 'Final standings coming up…',
     };
   }
-  return { title: "You're in", note: 'Look at the big screen.' };
+  return { title: 'Leaderboard' };
 }
 
 export function PlayerIntermission({
   phase,
   players,
+  reactions,
   upNext,
   onReact,
   onLeave,
@@ -89,8 +101,13 @@ export function PlayerIntermission({
         <EmojiStream feed={feed} variant="overlay" />
 
         <div className="player-intermission__body">
-          <p className="player-intermission__title">{title}</p>
-          <p className="subtle text-sm">{note}</p>
+          {/* Heading and leave button are pinned; the list between them is the
+              only thing that moves. Scrolling a phone full of names should never
+              carry off the label that says what the names are. */}
+          <div className="player-intermission__heading">
+            <p className="player-intermission__title">{title}</p>
+            {note && <p className="subtle text-sm">{note}</p>}
+          </div>
 
           {ranked.length === 0 ? (
             <p className="subtle text-sm">Nobody else yet.</p>
@@ -110,6 +127,7 @@ export function PlayerIntermission({
       </div>
 
       <ReactionBar
+        options={reactions}
         onReact={emoji => {
           onReact(emoji);
           setFeed(current => ({ seq: (current?.seq ?? 0) + 1, emojis: [emoji] }));

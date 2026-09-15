@@ -40,13 +40,31 @@ export function usePlayerActions(runId: string | null) {
   );
 
   /**
-   * An emoji from `EMOJI_PALETTE` — the buttons are rendered from it, so an
-   * off-list value can only come from a bug. The server rate-limits per player
-   * and drops the excess silently, which is why mashing needs no handling here.
+   * One of the emoji the snapshot's `reactions` offered — the bar renders a
+   * button per entry and the server accepts that exact list, so anything else
+   * can only come from a bug. The server rate-limits per player and drops the
+   * excess silently, which is why mashing needs no handling here.
    */
   const react = useCallback((emoji: string) => {
     send({ type: 'player:react', payload: { emoji } });
   }, []);
 
-  return useMemo(() => ({ answer, input, react }), [answer, input, react]);
+  /**
+   * **Quit, as opposed to drop.** Closing the socket cannot express this — a
+   * pocketed phone and a deliberate exit are the same event down there — so the
+   * intent has to go over the wire *before* the connection goes away. The server
+   * removes the player rather than greying them out, which is what makes coming
+   * back a fresh join with the name and avatar they meant to pick.
+   *
+   * Unbound to the run: leaving mid-question is the most likely moment for it.
+   *
+   * A quit typed while the socket is down is dropped like anything else, and the
+   * roster keeps the player as disconnected — the host's `kick` is the fallback,
+   * and one stale tile is a better failure than a phone that can't leave.
+   */
+  const leave = useCallback(() => {
+    send({ type: 'player:leave', payload: {} });
+  }, []);
+
+  return useMemo(() => ({ answer, input, react, leave }), [answer, input, react, leave]);
 }

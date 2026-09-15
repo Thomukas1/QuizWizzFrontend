@@ -41,11 +41,31 @@
   padding: var(--space-lg);
 }
 
+/* The heading holds still. It names what the list below it *is*, so scrolling it
+   away leaves the phone showing an unlabelled column of names — and it is two
+   lines at most, which is a cheap price for a fixed reference point. */
+.player-intermission__heading {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
 .player-intermission__title {
   font-family: var(--font-display);
   font-size: var(--font-size-xl);
   color: var(--text-primary);
   letter-spacing: 0.08em;
+}
+
+/* The only thing in here that scrolls. `flex: 1` claims the space the heading
+   and the leave button don't want, and `min-height: 0` is what actually lets it
+   shrink below its content — without it a flex item refuses to go under its
+   intrinsic height and the overflow lands on the shell instead, which is the
+   bug that looks like the reaction bar sliding off the bottom of the phone. */
+.player-intermission__body > .leaderboard {
+  flex: 1;
+  min-height: 0;
 }
 
 /* Pinned below the list rather than scrolling with it: the standings are the

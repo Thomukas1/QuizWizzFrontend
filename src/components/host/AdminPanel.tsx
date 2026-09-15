@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { JoinPanel } from './JoinPanel';
+import { ArmedButton } from '../../primitives/ArmedButton';
 import type { HostCommand } from '../../services/quizwizz';
 
 /**
@@ -38,45 +38,29 @@ export function AdminPanel({
   joinUrl,
   code,
 }: AdminPanelProps) {
-  // Ending a game wipes it for everyone in the room, and this button shares a
-  // panel with one you press all evening. So it arms first: one click to mean
-  // it, a second to do it. Cheaper than a modal and it disarms itself.
-  const [armed, setArmed] = useState(false);
-  // Same treatment for Skip: it ends the running game with no awards, so it
-  // costs everyone the points they were playing for and it sits next to the
-  // button you press all evening.
-  const [skipArmed, setSkipArmed] = useState(false);
-
-  useEffect(() => {
-    if (!armed) return;
-    const id = setTimeout(() => setArmed(false), 4000);
-    return () => clearTimeout(id);
-  }, [armed]);
-
-  useEffect(() => {
-    if (!skipArmed) return;
-    const id = setTimeout(() => setSkipArmed(false), 4000);
-    return () => clearTimeout(id);
-  }, [skipArmed]);
-
   return (
     <div className="admin-panel">
       <div className="admin-panel__actions">
         {/* Once the session is over there is nothing to protect, so the arming
-            step goes and the same button becomes the way out. Reusing it keeps
-            the panel from growing a control that only ever appears once. */}
-        <button
-          type="button"
-          className={`admin-btn ${ended ? 'admin-btn--next' : 'admin-btn--danger'}${armed ? ' admin-btn--armed' : ''}`}
-          disabled={!ended && !connected}
-          onClick={() => {
-            if (ended) return onEndGame();
-            if (!armed) return setArmed(true);
-            onEndGame();
-          }}
-        >
-          {ended ? 'Start a new game' : armed ? 'Tap again to wipe' : 'End game'}
-        </button>
+            step goes and the button becomes the plain way out — the same slot,
+            so the panel never grows a control that only ever appears once.
+            Ending a *live* game wipes it for everyone in the room, and this
+            shares a panel with a button you press all evening, so that one arms
+            first: one click to mean it, a second to do it. */}
+        {ended ? (
+          <button type="button" className="admin-btn admin-btn--next" onClick={onEndGame}>
+            Start a new game
+          </button>
+        ) : (
+          <ArmedButton
+            className="admin-btn admin-btn--danger"
+            armedClassName="admin-btn--armed"
+            disabled={!connected}
+            label="End game"
+            confirmLabel="Tap again to wipe"
+            onConfirm={onEndGame}
+          />
+        )}
       </div>
 
       {/* The way in, on screen for the whole evening rather than only while the
@@ -95,19 +79,15 @@ export function AdminPanel({
           Armed like the wipe button, because it silently costs everyone the
           points they were playing for.
         */}
-        <button
-          type="button"
-          className={`admin-btn admin-btn--ghost${skipArmed ? ' admin-btn--armed' : ''}`}
+        <ArmedButton
+          className="admin-btn admin-btn--ghost"
+          armedClassName="admin-btn--armed"
           disabled={!connected}
           title="End the running game with no points awarded"
-          onClick={() => {
-            if (!skipArmed) return setSkipArmed(true);
-            setSkipArmed(false);
-            command('skipGame');
-          }}
-        >
-          {skipArmed ? 'Tap to skip' : 'Skip ↦'}
-        </button>
+          label="Skip ↦"
+          confirmLabel="Tap to skip"
+          onConfirm={() => command('skipGame')}
+        />
 
         <button
           type="button"

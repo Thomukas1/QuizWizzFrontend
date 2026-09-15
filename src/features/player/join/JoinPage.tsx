@@ -73,12 +73,16 @@ export default function JoinPage() {
   }
 
   if (checking && !session) {
-    return <p className="p-3xl text-center subtle">Looking for a game…</p>;
+    return (
+      <div className="join-page join-page--message">
+        <p className="subtle">Looking for a game…</p>
+      </div>
+    );
   }
 
   if (session && !session.live) {
     return (
-      <div className="p-3xl flex flex-col gap-lg items-center text-center">
+      <div className="join-page join-page--message">
         <Wordmark size="var(--font-size-xl)" />
         <p className="subtle">No game running yet.</p>
         <p className="subtle text-sm">
@@ -89,60 +93,68 @@ export default function JoinPage() {
   }
 
   return (
-    <form onSubmit={submit} className="p-lg flex flex-col gap-xl">
-      <div className="flex flex-col items-center gap-md">
+    <form onSubmit={submit} className="join-page">
+      {/* Which game this is. A bar rather than the first thing in the stack:
+          it is the frame's top edge, and the two choices below it are the page. */}
+      <header className="join-page__head">
         <Wordmark size="var(--font-size-xl)" />
         {session?.code && (
-          <div className="flex items-center gap-md">
+          <div className="join-page__room">
             <span className="subtle text-sm">Joining</span>
             <RoomCode code={session.code} size="var(--font-size-lg)" />
           </div>
         )}
+      </header>
+
+      <div className="join-page__body">
+        <div className="join-page__field join-page__field--bleed">
+          <p className="eyebrow">Select Avatar</p>
+          <AvatarSlider selected={emoji} onSelect={setEmoji} />
+          {field === 'avatar' && error && (
+            <p className="text-sm" style={{ color: 'var(--color-error)' }} role="alert">{error}</p>
+          )}
+        </div>
+
+        <div className="join-page__field">
+          <label htmlFor="nickname" className="join-page__label">
+            Nickname
+            <span className="field-label-hint">
+              {name.length}/{NAME_MAX_LENGTH}
+            </span>
+          </label>
+          <input
+            id="nickname"
+            type="text"
+            // Capped here so `name_too_long` can never come back from the server.
+            maxLength={NAME_MAX_LENGTH}
+            autoComplete="nickname"
+            enterKeyHint="go"
+            value={name}
+            onChange={event => setName(event.target.value)}
+            className={'join-page__name' + (field === 'name' ? ' error' : '')}
+            placeholder="Enter nickname..."
+          />
+          {field === 'name' && error && (
+            <p className="text-sm" style={{ color: 'var(--color-error)' }} role="alert">{error}</p>
+          )}
+        </div>
       </div>
 
-      <div>
-        <p className="eyebrow mb-sm">Pick your face</p>
-        <AvatarSlider selected={emoji} onSelect={setEmoji} />
-        {field === 'avatar' && error && (
-          <p className="text-sm" style={{ color: 'var(--color-error)' }} role="alert">{error}</p>
+      <footer className="join-page__foot">
+        {/* A failure that belongs to neither control — the room is full, the game
+            ended between the poll and the tap. It sits with the button that
+            caused it, and the bar grows upward so Join stays where the thumb
+            last found it. */}
+        {field === null && error && (
+          <p className="text-center text-sm" style={{ color: 'var(--color-error)' }} role="alert">
+            {error}
+          </p>
         )}
-      </div>
 
-      <div>
-        <label htmlFor="nickname">
-          Nickname
-          <span className="field-label-hint">
-            {' '}{name.length}/{NAME_MAX_LENGTH}
-          </span>
-        </label>
-        <input
-          id="nickname"
-          type="text"
-          // Capped here so `name_too_long` can never come back from the server.
-          maxLength={NAME_MAX_LENGTH}
-          autoComplete="nickname"
-          enterKeyHint="go"
-          value={name}
-          onChange={event => setName(event.target.value)}
-          className={field === 'name' ? 'error' : undefined}
-          placeholder="Ada"
-        />
-        {field === 'name' && error && (
-          <p className="text-sm mt-sm" style={{ color: 'var(--color-error)' }} role="alert">{error}</p>
-        )}
-      </div>
-
-      {/* A failure that belongs to neither control — the room is full, the game
-          ended between the poll and the tap. */}
-      {field === null && error && (
-        <p className="text-center text-sm" style={{ color: 'var(--color-error)' }} role="alert">
-          {error}
-        </p>
-      )}
-
-      <button type="submit" className="special" disabled={!ready}>
-        {loading ? 'Joining…' : 'Join'}
-      </button>
+        <button type="submit" className="special join-page__submit" disabled={!ready}>
+          {loading ? 'Joining…' : 'Join'}
+        </button>
+      </footer>
     </form>
   );
 }

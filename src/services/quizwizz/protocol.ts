@@ -59,6 +59,30 @@ export type Avatar =
 
 export type AvatarKind = Avatar['kind'];
 
+/**
+ * **What a reaction button is.** One per emoji the receiving player may send,
+ * in bar order, on their snapshot.
+ *
+ * The client used to build this itself: the palette out of `config.ts`, plus the
+ * player's own avatar pulled back out of the union and appended. That worked and
+ * it was wrong — the rule for *what may be sent* was written down in two
+ * codebases, and the server's copy was the only one that decided anything. A
+ * client that got it wrong got silence, because an off-list reaction is dropped
+ * without a refusal. Now the server says what the buttons are and enforces
+ * exactly that list, so the two cannot drift apart.
+ *
+ * `kind` is what the bar renders from, not what it sends — a `self` button gets
+ * its own colour because it is a wave rather than a mood. There is at most one
+ * of them, and a player whose avatar has no emoji to send simply gets a shorter
+ * list rather than a button that does nothing.
+ */
+export type ReactionKind = 'palette' | 'self';
+
+export interface ReactionOption {
+    emoji: string;
+    kind: ReactionKind;
+}
+
 export interface PublicPlayer {
     id: string;
     name: string;
@@ -158,6 +182,15 @@ export interface SessionSnapshot {
     view: ViewFrame | null;
     /** Set for a player connection only — its own identity, echoed back. */
     you: { playerId: string; name: string; avatar: Avatar; score: number } | null;
+    /**
+     * Every emoji this connection may send, in bar order. Empty for the host,
+     * which has no reaction bar.
+     *
+     * On the snapshot rather than on its own message because it cannot change
+     * within a session — the palette is a constant and an avatar is picked at
+     * the door — and a reconnect re-delivers it with everything else.
+     */
+    reactions: ReactionOption[];
     /** Server time at send, so a client can seed its clock offset before the first ping. */
     tServer: number;
 }
@@ -236,6 +269,35 @@ export type ClientMessage =
     | { type: 'player:react'; payload: { emoji: string } }
     | { type: 'player:answer'; payload: { runId: string; itemId: string; choice: unknown } }
     | { type: 'player:input'; payload: { runId: string; seq: number; type: string; payload?: unknown } }
+    /**
+     * **"I am not coming back."** The one thing a closing socket cannot say.
+     *
+     * A dropped connection and a deliberate quit look identical at the transport
+     * layer, and the server is right to treat silence as the former: a phone in a
+     * pocket goes grey in the roster, keeps its score, and repaints on reconnect.
+     * That leaves no way to say the other thing — which is the case that actually
+     * needs saying, because the reason someone quits is usually a misspelled name
+     * or the wrong avatar, and the fix is to be *gone* and join again fresh.
+     *
+     * So the server removes the player outright rather than marking them
+     * disconnected: out of the roster, out of the standings, everyone else
+     * re-ranked over who is left, and their socket closed. Their token dies with
+     * the row and through nothing else — there is no revocation list, the token
+     * simply names a player this session no longer has, so a stale tab still
+     * holding that pass reconnects into `unknown_player`, which is already a
+     * no-retry ending on the client. Rejoining is then an ordinary `/join`: new
+     * `playerId`, score at zero, and the name they quit holding is free again.
+     *
+     * Empty payload — the sender is the token on the connection, so a player may
+     * only ever remove themselves and there is no `playerId` here to forge.
+     * Removing somebody else is `kick`, which is the host's.
+     *
+     * Unbound to `runId`, unlike the two messages above it: those are pinned so a
+     * submission for the previous game cannot score against the one on screen
+     * now, but mid-question is the likeliest moment to give up on the evening,
+     * and a quit refused as `stale_run` is a phone that cannot leave.
+     */
+    | { type: 'player:leave'; payload: Record<string, never> }
     | { type: 'host:command'; payload: { cmd: HostCommand; args?: Record<string, unknown> } };
 
 export type ServerMessage =
@@ -267,6 +329,7 @@ export const CLIENT_EVENTS: readonly ClientEventName[] = [
     'player:react',
     'player:answer',
     'player:input',
+    'player:leave',
     'host:command',
 ];
 

@@ -126,7 +126,14 @@ export function Leaderboard({
                 )}
               </span>
             )}
-            <span className="leaderboard__score">{player.score}</span>
+            {/* The unit is a separate span so it can be sized and dimmed away
+                from the number — on a television the score is the thing being
+                read from three metres and "pts" is only there to say what it
+                is, not to compete with it. */}
+            <span className="leaderboard__score">
+              {player.score}
+              <span className="leaderboard__unit">pts</span>
+            </span>
           </li>
         );
       })}

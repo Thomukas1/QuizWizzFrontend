@@ -11,8 +11,14 @@
    rather than a fixed grid — the status strip comes and goes, and a grid with a
    row for something that usually isn't there leaves a gap that is. */
 
+/* `height`, never `min-height`. The shell is a frame with a fixed bottom edge:
+   whatever the scene puts at that edge — the reaction bar, a module's controls —
+   has to stay under the thumb, and a shell that grows with its content is a
+   shell whose bottom edge is wherever the content happened to end. */
 .player-shell {
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }

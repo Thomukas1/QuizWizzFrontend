@@ -89,6 +89,18 @@
   /* Tabular figures, so a column of scores lines up instead of shimmering as
      the numbers change width. */
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Says what the number is and then gets out of its way. Sized in `em` so it
+   tracks the row it is in — the `--lg` rows are more than twice the `--sm` ones
+   and a fixed 12px unit would vanish on a television. */
+.leaderboard__unit {
+  margin-left: 0.3em;
+  font-family: var(--font-body);
+  font-size: 0.62em;
+  font-weight: var(--font-weight-normal);
+  color: var(--text-muted);
 }
 
 .leaderboard--sm .leaderboard__row { font-size: var(--font-size-base); }

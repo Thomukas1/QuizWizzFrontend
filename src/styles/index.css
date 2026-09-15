@@ -35,6 +35,7 @@
 @import './components/player-intermission.css';
 @import './components/player-game.css';
 @import './components/reaction-bar.css';
+@import './components/join-page.css';
 @import './components/avatar-slider.css';
 
 /* Tailwind CSS */
@@ -145,12 +146,36 @@ html[data-view='host'] #root {
   padding: 0;
 }
 
-/* The phone. The 430px strip, but full-height so the reaction bar can sit on
-   the bottom edge rather than below the fold. */
+/* The phone. The 430px strip, and a *definite* full height — not a minimum.
+   That distinction is load-bearing: `min-height` lets the strip grow with its
+   content, which means a long standings list pushes the page past the fold and
+   takes the reaction bar down with it. A fixed height makes the strip a frame,
+   so the one long thing inside it scrolls in place and the bar stays on the
+   bottom edge where a thumb left it. Like the television, the document itself
+   never scrolls; only the list does. */
+html[data-view='player'] {
+  height: 100%;
+  overflow: hidden;
+}
+
+html[data-view='player'] body {
+  /* No gutter. The header and the reaction bar are the frame's two edges and
+     have to reach the glass — a 16px margin around them turns a device into a
+     card floating on a background, and on a phone narrower than the strip it is
+     16px stolen from a row of eight tap targets. Every block inside the player
+     view already brings its own padding, so this was only ever a second gutter
+     outside the first. */
+  padding: 0;
+}
+
+/* The strip itself. `max-width: 430px` still caps the content on a desktop, but
+   a phone is narrower than that, so the cap does not bind and the bars run edge
+   to edge. The insets are the notch: zero in portrait, which is the whole of how
+   this is played, and in landscape they hold the strip clear of the cutout
+   rather than letting a reaction button sit under it. */
 html[data-view='player'] #root {
-  min-height: 100dvh;
-  padding-top: 0;
-  padding-bottom: 0;
+  height: 100dvh;
+  padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
 }
 
 /* Neither: a form that has to read on both. Centred in whatever it is given. */

@@ -33,16 +33,24 @@ export default function PlayerPage() {
   const state = useQuizWizz(identity ? 'player' : null);
   // Bound to the frame's `runId`, not the phase's game: a submission is pinned
   // to the exact playthrough that projected the controls it was typed into.
-  const { react, answer, input } = usePlayerActions(state.view?.runId ?? null);
+  const { react, answer, input, leave: sendLeave } = usePlayerActions(state.view?.runId ?? null);
 
   // Drop the pass and start over. `resetStore` matters as much as the token: the
   // store's rev high-water mark is module-scope, and carrying it into the next
   // game would silently reject every frame of it.
+  //
+  // `sendLeave` goes first and has to: leaving this route unmounts the hook,
+  // which closes the socket, and a message fired at a closed socket is dropped.
+  // Without it the server sees only a closed connection — indistinguishable from
+  // a phone in a pocket — and leaves the player greyed out in the roster holding
+  // the name and avatar they quit to change. The close still flushes it; a
+  // browser sends what is queued before the close frame.
   const leave = useCallback(() => {
+    sendLeave();
     clearPlayerIdentity();
     resetStore();
     navigate('/play', { replace: true });
-  }, [navigate]);
+  }, [navigate, sendLeave]);
 
   if (!identity) return <Navigate to="/play" replace />;
 
@@ -59,7 +67,7 @@ export default function PlayerPage() {
 
   return (
     <div className="player-shell">
-      <PlayerHeader you={state.you} />
+      <PlayerHeader you={state.you} onQuit={leave} />
 
       {state.ending ? (
         <div className="player-shell__status player-shell__status--error">
@@ -87,6 +95,7 @@ export default function PlayerPage() {
           <PlayerIntermission
             phase={state.phase}
             players={state.players}
+            reactions={state.reactions}
             upNext={state.upNext}
             onReact={react}
             onLeave={leave}

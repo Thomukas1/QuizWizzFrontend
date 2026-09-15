@@ -5,6 +5,7 @@ import type {
   PublicLedgerEntry,
   PublicPlayer,
   QuizWizzReason,
+  ReactionOption,
   ScoreTotal,
   ServerMessage,
   SessionSnapshot,
@@ -74,6 +75,15 @@ export interface QuizWizzState {
   view: ViewFrame | null;
   /** Players only. The host has no `you`. */
   you: SessionSnapshot['you'];
+  /**
+   * **The reaction bar, as the server composed it** — the palette plus this
+   * player's own avatar, in the order the buttons go in. Empty for the host.
+   *
+   * The phone does not assemble this and must not filter it. It is the same list
+   * the server checks a `player:react` against, so a bar built any other way is
+   * a bar that can offer a button the server drops in silence.
+   */
+  reactions: ReactionOption[];
 
   // ── Transient things a component reacts to rather than renders ───────────
   /** The latest scoring pass, for "+3 — 1st fastest" flyups. */
@@ -103,6 +113,7 @@ const EMPTY: QuizWizzState = {
   players: [],
   view: null,
   you: null,
+  reactions: [],
   scores: null,
   burst: null,
   ack: null,
@@ -192,6 +203,7 @@ export function apply(message: ServerMessage): void {
         players: s.players,
         view: s.view,
         you: s.you,
+        reactions: s.reactions,
         // A snapshot describes the moment, not the events that got here. Anything
         // transient is from before the disconnect and re-showing it would replay
         // an old toast over a freshly painted screen.

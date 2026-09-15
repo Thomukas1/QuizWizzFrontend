@@ -244,6 +244,7 @@ component, one source.
 |---|---|---|
 | `sync:ping` | both | `{ t0 }` |
 | `player:react` | player | `{ emoji }` — must be from `EMOJI_PALETTE` |
+| `player:leave` | player | `{}` — quit for good; **removes**, never greys out |
 | `player:answer` | player | `{ runId, itemId, choice }` |
 | `player:input` | player | `{ runId, seq, type, payload? }` — minigames |
 | `host:command` | host | `{ cmd, args }` |
@@ -251,6 +252,17 @@ component, one source.
 Always include the current `runId` — one playthrough of one game, straight off the frame that
 projected the controls. A submission for a finished game comes back as
 `answer:ack { accepted: false, reason: 'stale_run' }`.
+
+**`player:leave` is the one thing a closing socket cannot say.** A dropped connection and a
+deliberate quit are the same event at the transport layer, and silence has to mean the first one: a
+phone in a pocket goes `connected: false`, keeps its score and its place, and repaints on reconnect.
+That is the behaviour to protect, so the other case gets a message of its own. On receipt the server
+**removes the player from the session** — gone from `players`, gone from the standings, ranks
+recomputed — broadcasts a `roster:update` without them, invalidates their token and closes their
+socket. A stale tab still holding that pass reconnects into `error unknown_player`, which is already
+a no-retry ending on the client. Rejoining is an ordinary `/join`: new `playerId`, score at zero,
+and the name and avatar they quit to fix. The phone sends it *before* it drops the token, because
+after that there is no socket to send it on.
 
 A phone sending `host:command` gets `error wrong_role`. The role is bound to the token, so there is
 nothing to spoof — but don't ship the host bundle to `/play` either.

@@ -1,0 +1,47 @@
+/* ============================================================
+   Testimonials card
+   ============================================================ */
+
+/* Countdown bar — drains left over one rotation interval, then the element is
+   remounted (React `key`) to restart it. Duration is set inline to match the
+   rotation timer. scaleX (not width) so it animates on the GPU. */
+.testimonial-progress {
+  transform-origin: left;
+  animation: testimonialCountdown linear forwards;
+}
+
+@keyframes testimonialCountdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* Ambient equalizer behind the quote — very low opacity so it reads as texture,
+   never competing with the text. Bars pulse on staggered delays (set inline). */
+.testimonial-eq {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: var(--space-lg) var(--space-md) 0;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.testimonial-eq span {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: eqPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes eqPulse {
+  0%, 100% { transform: scaleY(0.15); }
+  50%      { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-eq span { animation: none; transform: scaleY(0.4); }
+}

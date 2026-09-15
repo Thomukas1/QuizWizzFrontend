@@ -1,0 +1,110 @@
+/* ============================================================
+   Main Stylesheet — imports design system then Tailwind
+   ============================================================ */
+
+/* Design System */
+@import './theme.css';
+@import './components/text.css';
+@import './components/buttons.css';
+@import './components/cards.css';
+@import './components/image.css';
+@import './components/forms.css';
+@import './components/dropdown.css';
+@import './components/modals.css';
+@import './components/bottom-sheet.css';
+@import './components/lock-screen.css';
+@import './components/bars-page.css';
+@import './components/songwriter.css';
+@import './components/slider.css';
+@import './components/spinners.css';
+@import './components/stat-bar.css';
+@import './components/toast.css';
+@import './components/music-player.css';
+@import './components/mini-player.css';
+@import './components/bop-meter.css';
+@import './components/processing-card.css';
+@import './components/deadline-strip.css';
+@import './components/public-jam.css';
+@import './components/jam-winner.css';
+@import './components/discography-tabs.css';
+@import './components/testimonials.css';
+@import './components/faq.css';
+@import './components/section-fill.css';
+@import './components/facet-card.css';
+@import './components/album-world.css';
+@import './components/jam-world.css';
+@import './components/transitions.css';
+
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Global Reset
+   ============================================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Body & Root */
+html {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  /* Full-bleed fills are 100vw wide, which counts the vertical scrollbar — on
+     desktop that's a few px past the visible edge and would raise a horizontal
+     scrollbar. Nothing is meant to scroll sideways here, so clip it. */
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--text-primary);
+  padding: 0 var(--space-lg);
+}
+
+/* Animated diagonal stripes background.
+   Oversized to 300% and anchored off-viewport (-50% inset) so there's always a
+   ~50vw/50vh overscan margin on every edge. The scroll distance is unchanged
+   (one viewport diagonal per cycle — see the keyframes), so it looks identical
+   to a 200% element, but the edges never reach the viewport. Without this,
+   mobile browsers expose a white strip from the right as the dynamic toolbar +
+   sub-pixel rounding make the exact-fit edge fall short mid-animation. */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 300%;
+  height: 300%;
+  /* -2, not -1: it leaves -1 free as a fill plane that any section can paint a
+     flat colour into to break up the stripes (see components/section-fill.css)
+     while still sitting under all page content. */
+  z-index: -2;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--p-navy) 0px,
+    var(--p-navy) 50px,
+    var(--p-cobalt) 50px,
+    var(--p-cobalt) 100px
+  );
+  /* Keep the layer GPU-composited and stable so mobile doesn't drop its tiles. */
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: diagonalScroll 50s linear infinite;
+}
+
+/* Mobile-first: force vertical mobile layout even on desktop */
+#root {
+  padding-top: var(--space-lg);
+  padding-bottom: var(--app-bottom-inset);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  max-width: 430px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}

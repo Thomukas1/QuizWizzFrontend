@@ -1,0 +1,239 @@
+/* ============================================================
+   SongWriter — the "write a song" instrument
+   A bezel carrying the header + author slot, an inset ruled screen the lyrics
+   are written on, a readout strip, and the send key. See `lyricLines.ts` for
+   the line model the screen renders.
+   ============================================================ */
+
+/* The rule pitch — every row's height and every line's leading. */
+.songwriter {
+  --rule: 32px;
+  /* How much of the page shows at once — the window onto it. The page's own
+     height comes from MAX_LINES in `lyricLines.ts`, which renders the rows. */
+  --rules-visible: 8;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  /* Tighter than a card's usual `lg`: the writing width is what's scarce here,
+     and every pixel taken off the sides is a pixel a full line gets to use. */
+  padding: var(--space-md);
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ── Bezel ─────────────────────────────────────────────────── */
+
+.songwriter__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.songwriter__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+}
+
+.songwriter__tally {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--accent);
+}
+
+/* The signature line, under the page — who's sending it, not part of what's
+   written on it. Same recessed surface as the screen, so it reads as somewhere
+   to type rather than as a caption. */
+.songwriter__author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.45);
+  transition: border-color var(--transition-base);
+}
+
+.songwriter__author:focus-within {
+  border-color: rgba(182, 248, 51, 0.45);
+}
+
+.songwriter__author.error {
+  border-color: var(--color-error);
+}
+
+.songwriter__author-label {
+  flex: none;
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.songwriter__author input {
+  /* Bare: the recessed slot around it is the field. Sage and 16px to match the
+     lines above — an author credit is the other half of what the palette
+     reserves sage for (THEME.md), and the player renders it that way too. */
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--text-soft);
+  caret-color: var(--accent);
+}
+
+.songwriter__author input:focus {
+  outline: none;
+}
+
+/* ── Screen ────────────────────────────────────────────────── */
+
+/* The window onto the page: eight lines of it, scrolling to reach the rest.
+   The page's lines are real fields laid out inside, so nothing here has to be
+   kept in sync with anything — the browser scrolls the focused line into view
+   by itself. */
+.songwriter__screen {
+  display: flex;
+  flex-direction: column;
+  height: calc(var(--rule) * var(--rules-visible) + var(--space-sm) * 2);
+  padding: var(--space-sm) 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.45);
+  transition: border-color var(--transition-base);
+}
+
+.songwriter__screen:focus-within {
+  border-color: rgba(182, 248, 51, 0.45);
+}
+
+.songwriter__screen.error {
+  border-color: var(--color-error);
+}
+
+.songwriter__screen::-webkit-scrollbar {
+  display: none;
+}
+
+/* One line of the page. The rule is this row's own bottom border, so a line and
+   the rule it sits on can never drift apart. */
+.songwriter__row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: var(--rule);
+  padding: 0 var(--space-sm);
+  border-bottom: 1px solid rgba(182, 248, 51, 0.13);
+}
+
+.songwriter__row:focus-within {
+  background: rgba(182, 248, 51, 0.06);
+}
+
+/* The line's handle. Reads as a control rather than a caption, because that's
+   what it's going to be — the grip for sliding a line up or down the page.
+   Inert for now, so it stays quiet: no hover or press state promises behaviour
+   that isn't there yet. `accent-dim` rather than `soft`, which is spoken for by
+   the lyrics sitting right beside it. */
+.songwriter__handle {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: var(--space-xs);
+  padding: 0;
+  border: 1px solid rgba(145, 202, 47, 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(145, 202, 47, 0.08);
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent-dim);
+  opacity: 0.55;
+  user-select: none;
+  cursor: default;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+/* The line you're on owns its handle — the one place the page tracks where you
+   are, now that there's no single caret to follow. */
+.songwriter__row:focus-within .songwriter__handle {
+  opacity: 1;
+  background: rgba(145, 202, 47, 0.18);
+  border-color: rgba(145, 202, 47, 0.55);
+}
+
+/* A written line's handle sits between the two — the page reads as filled at a
+   glance, without the numbers shouting. */
+.songwriter__row.written .songwriter__handle {
+  opacity: 0.8;
+}
+
+.songwriter__row input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  padding: 0;
+  background: transparent;
+  /* Matches the lyrics in the music player: same body face, same sage. What's
+     written here is the same thing that ends up rendered there, and sage is the
+     palette's mark for what a person actually wrote (see THEME.md) — so it
+     should already look like itself while it's being typed.
+
+     Sized at `base` rather than the player's `text-sm` for two reasons: `base`
+     is 16px at every breakpoint, where `sm` jumps to 16px only above 768px
+     while this pad stays 430px wide; and 16px is the threshold under which iOS
+     Safari zooms the page on focusing an input — with a page made of twenty of
+     them, that zoom would be relentless. A full LINE_MAX line still leaves
+     room to spare at this size. */
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: var(--rule);
+  color: var(--text-soft);
+  caret-color: var(--accent);
+}
+
+.songwriter__row input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ── Readout ───────────────────────────────────────────────── */
+
+.songwriter__readout {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.songwriter__readout .low {
+  color: var(--color-warning);
+}
+
+.songwriter__error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+}

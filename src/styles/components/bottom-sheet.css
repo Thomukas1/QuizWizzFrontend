@@ -1,0 +1,93 @@
+/* ============================================================
+   Bottom Sheet — slide-up panel covering ~85vh
+   Header stays visible above (z-index higher than sheet)
+   ============================================================ */
+
+.bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: var(--z-modal-backdrop);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.bottom-sheet-backdrop.open {
+  opacity: 1;
+}
+
+.bottom-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 430px;
+  height: 80dvh;
+  max-height: 80vh;
+  background: var(--bg-secondary);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  border-top: 3px solid var(--brand);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  touch-action: pan-y;
+}
+
+.bottom-sheet.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.bottom-sheet-handle-area {
+  padding: var(--space-md) var(--space-lg) var(--space-sm);
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.bottom-sheet-handle-area:active {
+  cursor: grabbing;
+}
+
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-surface);
+}
+
+.bottom-sheet-header {
+  padding: 0 var(--space-xl) var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.bottom-sheet-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  /* Centred to line up with the drag handle above it — the two read as one
+     masthead rather than a handle with a caption hanging off the left. */
+  text-align: center;
+}
+
+.bottom-sheet-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-lg) var(--space-xl) var(--space-3xl);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Flush variant — the consumer owns padding and scrolling, so it can keep a
+   fixed header and scroll only part of the body. */
+.bottom-sheet-content.flush {
+  padding: 0;
+  overflow: hidden;
+}

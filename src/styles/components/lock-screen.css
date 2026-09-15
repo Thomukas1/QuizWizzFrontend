@@ -1,0 +1,55 @@
+/* ============================================================
+   Lock Screen — the app-wide "wait, this is happening" overlay
+   held up while an irreversible or slow action is in flight.
+
+   Heavier than the modal overlay on purpose: a modal is a thing
+   you can dismiss, and this is a thing you can't. Nothing on it
+   is interactive, so it reads as a state rather than a surface —
+   no card, no edge, just the spinner and the sentence.
+   ============================================================ */
+
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-lock);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.88);
+  /* Belt and braces next to `inert`: taps land here whatever happens with
+     focus, and the cursor says "busy" rather than inviting a click. */
+  cursor: wait;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  /* `both` holds the from-state through the delay, so an action that resolves
+     inside 150ms locks the UI without ever flashing an overlay at anyone. */
+  animation: lock-screen-in var(--transition-slow) ease 150ms both;
+}
+
+@keyframes lock-screen-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.lock-screen__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.lock-screen__detail {
+  max-width: 34ch;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lock-screen {
+    animation: none;
+  }
+}

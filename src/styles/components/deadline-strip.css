@@ -1,0 +1,45 @@
+/* ============================================================
+   Deadline Strip — the "closing in" countdown pinned below the
+   submission form on a dated mixtape. Red, centered, and softly
+   pulsing so a room can't miss that the window is closing.
+   ============================================================ */
+
+.deadline-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  text-align: center;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: var(--space-sm) var(--space-md);
+  animation: deadline-pulse 1.8s ease-in-out infinite;
+}
+
+/* Tabular figures so the ticking seconds don't jitter the width. */
+.deadline-strip__time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Breathing red glow — draws the eye without moving layout. */
+@keyframes deadline-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 14px 2px color-mix(in srgb, var(--color-error) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deadline-strip {
+    animation: none;
+    /* keep a soft static ring so it still reads as urgent */
+    box-shadow: 0 0 10px 1px color-mix(in srgb, var(--color-error) 45%, transparent);
+  }
+}

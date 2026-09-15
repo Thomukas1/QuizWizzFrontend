@@ -1,0 +1,88 @@
+/* ============================================================
+   Processing Card — a not-yet-released song. Mirrors SingleCard's
+   row, but the cover is "developing" (blurred) and a light chases
+   around the outline while a live countdown ticks toward release.
+   ============================================================ */
+
+.processing-card {
+  position: relative;
+  border-radius: var(--radius-md);
+  padding: 2px;                 /* the visible spinning-border thickness */
+  overflow: hidden;
+  isolation: isolate;
+  /* faint static ring so the outline reads even between light sweeps */
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Rotating conic sweep — only the 2px padding gap shows it, so it reads
+   as a bright light chasing around the card's edge. */
+.processing-card::before {
+  content: '';
+  position: absolute;
+  inset: -60%;
+  z-index: -1;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 300deg,
+    var(--accent) 348deg,
+    transparent 360deg
+  );
+  animation: spin 2.4s linear infinite;
+}
+
+.processing-card__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  border-radius: calc(var(--radius-md) - 2px);
+  background: var(--bg-surface);
+  padding: var(--space-sm);
+  min-height: 44px;
+}
+
+/* The cover art is still "developing" — dim + blurred until reveal. */
+.processing-card__cover {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  filter: blur(3px) grayscale(0.4) brightness(0.65);
+}
+
+.processing-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.processing-card__title {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.processing-card__count {
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+/* The countdown value itself pops in the accent color. */
+.processing-card__time {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .processing-card::before {
+    animation: none;
+    /* full soft ring instead of a moving sweep */
+    background: color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}

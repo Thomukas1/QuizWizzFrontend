@@ -1,0 +1,81 @@
+/* ============================================================
+   Jam Winner — the one song that survived, on the jam page.
+
+   The jam world is the app's darkest room and every song on it
+   was a maybe. Exactly one stops being a maybe, so this is the
+   page's single spend of lime: a lit plinth in a dark room,
+   which is the whole of why it reads as a prize rather than as
+   another row.
+
+   Restraint holds elsewhere — one animated element (the crown's
+   glow), and a bloom small enough to sit behind an emoji rather
+   than wash the card.
+   ============================================================ */
+
+.jam-winner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  /* Lime pulled *into* the recessed navy rather than laid over it, so the fill
+     stays well under the border — that gap is what keeps the edge lit. */
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-secondary));
+  padding: var(--space-lg);
+  /* Outside glow and an inside rim: the card looks lit from within, not
+     stickered onto the page. */
+  box-shadow:
+    0 0 28px -8px color-mix(in srgb, var(--accent) 55%, transparent),
+    inset 0 0 24px -14px var(--accent);
+}
+
+/* The crown, on its own line and sat in a soft lime bloom. Sized well past body
+   copy — it's the first thing the eye lands on, and the sentence under it only
+   has to confirm what the crown already said. */
+.jam-winner__crown {
+  font-size: 40px;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
+  animation: jam-winner-shine 2.8s ease-in-out infinite;
+}
+
+/* The garnish: the glow swells and settles, and the crown lifts a hair with it.
+   Slow enough to read as breathing rather than blinking. */
+@keyframes jam-winner-shine {
+  0%, 100% {
+    transform: translateY(0);
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 45%, transparent));
+  }
+  50% {
+    transform: translateY(-3px);
+    filter: drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 80%, transparent));
+  }
+}
+
+.jam-winner__title {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-base);
+  text-align: center;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* The song sits in the recess a list row would, so tapping it feels like the
+   same object it is everywhere else in the app — the celebration is the frame
+   around it, not a different way to play a track. */
+.jam-winner__song {
+  width: 100%;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Hold the bright end of the glow — still lit, just not moving. */
+  .jam-winner__crown {
+    animation: none;
+    filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 65%, transparent));
+  }
+}

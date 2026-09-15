@@ -1,0 +1,25 @@
+/* Facet card — the four elements an artist is built from, on the Roster. Each
+   card is tinted by its own facet colour, passed in as --facet; everything here
+   mixes from that one value, so a card only ever needs the variable set. */
+.facet-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--facet) 10%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--facet) 35%, transparent);
+}
+
+/* The label carries the colour too — the tint alone is too weak to name it. */
+.facet-card__label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--facet) 75%, var(--text-primary));
+}
+
+.facet-card__emoji {
+  font-size: var(--font-size-base);
+  line-height: 1;
+}

@@ -1,0 +1,588 @@
+/* ============================================================
+   Form Styles — Inputs, Textareas, Labels, Fields
+   ============================================================ */
+
+/* Form Container */
+.form,
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+}
+
+/* Label */
+label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+  color: var(--text-primary);
+  transition: color var(--transition-base);
+}
+
+label.required::after {
+  content: ' *';
+  color: var(--color-error);
+}
+
+/* Muted inline hint inside a label, e.g. "Email (optional)" */
+.field-label-hint {
+  color: var(--text-muted);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Prominent label — the label is the focus (a question or statement). Centered
+   and height-reserved to match .likert__statement, so a stepped questionnaire
+   reads the same either way and doesn't jump between questions of differing
+   length. */
+.field-label--lg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5em;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--heading-h2-line-height);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* Input Base */
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  width: 100%;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Focus */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(17, 60, 178, 0.15);
+}
+
+/* Disabled */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-input);
+}
+
+/* Read-only — a value the form filled in for you, not one you type. Unlike
+   :disabled this stays at full strength and picks up the accent, so it reads as
+   a confirmed choice and matches whatever control is driving it. */
+input:read-only {
+  color: var(--accent);
+  cursor: default;
+}
+
+input:read-only:focus {
+  border-color: var(--border-color);
+  box-shadow: none;
+}
+
+/* Error State */
+input.error,
+textarea.error,
+select.error {
+  border-color: var(--color-error);
+  background: rgba(232, 52, 74, 0.05);
+}
+
+input.error:focus,
+textarea.error:focus,
+select.error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(232, 52, 74, 0.15);
+}
+
+/* Success State */
+input.success,
+textarea.success {
+  border-color: var(--color-success);
+  background: rgba(182, 248, 51, 0.05);
+}
+
+/* Textarea */
+textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: var(--font-body);
+}
+
+/* Light variant — white panel, dark text */
+input.light,
+textarea.light,
+select.light {
+  background: var(--white);
+  color: var(--text-alt);
+  border-color: var(--border-color);
+}
+
+input.light::placeholder,
+textarea.light::placeholder {
+  color: var(--text-muted);
+}
+
+/* Field Wrapper */
+.field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+/* Spacing between label and control is the flex gap above; drop the label's
+   own margin so the two don't stack into one large gap. */
+.field-wrapper label {
+  margin-bottom: 0;
+}
+
+.field-wrapper--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.field-wrapper--inline input {
+  flex: 1;
+}
+
+/* Field Group (Multiple Inputs) */
+.field-group {
+  display: grid;
+  gap: var(--space-lg);
+  width: 100%;
+}
+
+.field-group--cols-2 { grid-template-columns: 1fr 1fr; }
+.field-group--cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* Field Error Message */
+.field-error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  margin-top: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Field Success Message */
+.field-success {
+  font-size: var(--font-size-xs);
+  color: var(--color-success);
+  margin-top: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Field Help Text */
+.field-help {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+}
+
+/* Checkbox & Radio */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkbox-wrapper,
+.radio-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  cursor: pointer;
+}
+
+.checkbox-wrapper label,
+.radio-wrapper label {
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-wrapper input,
+.radio-wrapper input {
+  width: auto;
+  margin: 0;
+}
+
+/* Select (Dropdown) */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right var(--space-md) center;
+  background-size: 20px;
+  padding-right: var(--space-3xl);
+  color: var(--text-primary);
+}
+
+select:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+
+/* Input with a fixed prefix/affix (e.g. "@" for a handle) — the wrapper looks
+   like the field; the inner input is borderless and transparent. */
+.input-affix {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  overflow: hidden;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.input-affix:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(17, 60, 178, 0.15);
+}
+
+.input-affix.error {
+  border-color: var(--color-error);
+  background: rgba(232, 52, 74, 0.05);
+}
+
+.input-affix__prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-md);
+  color: var(--text-muted);
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-right: 1px solid var(--border-color);
+  user-select: none;
+}
+
+.input-affix input {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
+.input-affix input:focus {
+  box-shadow: none;
+}
+
+/* Form Section — a filled panel grouping a set of fields into a visual phase */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+}
+
+.form-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.form-section__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.form-section__desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.form-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Step navigator — numbered buttons; active is highlighted, complete is green */
+.step-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.step-nav__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.step-nav__btn:hover:not(.is-active) {
+  border-color: var(--brand);
+}
+
+/* Completed — green fill */
+.step-nav__btn.is-complete {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-alt);
+}
+
+/* Active but not yet complete — brand fill */
+.step-nav__btn.is-active:not(.is-complete) {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--white);
+}
+
+/* Active — ring on top of whatever fill it has */
+.step-nav__btn.is-active {
+  box-shadow: 0 0 0 3px rgba(17, 60, 178, 0.35);
+}
+
+/* Likert — rapid-fire 1–5 rating, one statement at a time */
+.likert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.likert__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.likert__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track-bg);
+  overflow: hidden;
+}
+
+.likert__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width var(--transition-base);
+}
+
+.likert__count {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.likert__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.likert__statement {
+  /* Reserve height so the layout doesn't jump between statements of differing
+     length as they auto-advance. */
+  min-height: 3.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--heading-h2-line-height);
+  text-align: center;
+}
+
+.likert__scale {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Colored agreement circles — unfilled with a colored border; fill + flash on
+   select. The diverging scale runs deep red → yellow → deep green. */
+.likert__opt {
+  --opt-color: var(--border-color);
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 3px solid var(--opt-color);
+  border-radius: var(--radius-full);
+  /* Faint tint of the circle's own color so it reads as "unfilled" without
+     blending into the section background. */
+  background: color-mix(in srgb, var(--opt-color) 18%, transparent);
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.likert__opt--1 { --opt-color: #E8344A; } /* deep red — strongly disagree */
+.likert__opt--2 { --opt-color: #F2803E; } /* orange */
+.likert__opt--3 { --opt-color: #F5C518; } /* yellow — neutral */
+.likert__opt--4 { --opt-color: #8FC93A; } /* yellow-green */
+.likert__opt--5 { --opt-color: #2E9E5B; } /* deep green — strongly agree */
+
+.likert__opt:hover:not(.is-selected) {
+  transform: scale(1.08);
+}
+
+.likert__opt.is-selected {
+  background: var(--opt-color);
+  animation: likertPop 200ms ease;
+}
+
+@keyframes likertPop {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 var(--opt-color); }
+  50%  { transform: scale(1.2); box-shadow: 0 0 16px 2px var(--opt-color); }
+  100% { transform: scale(1.06); box-shadow: 0 0 0 0 transparent; }
+}
+
+.likert__anchors {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Completed state — replaces the question/scale/progress once all answered */
+.likert__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl) 0;
+  text-align: center;
+}
+
+.likert__done-text {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  color: var(--accent);
+}
+
+.likert__reset {
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: opacity var(--transition-base);
+}
+
+.likert__reset:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.likert__reset:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Multi-select — removable pills + an "add" picker */
+.multiselect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.multiselect__pills {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--text-alt);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.pill__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: rgba(5, 22, 72, 0.2);
+  color: var(--text-alt);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.pill__remove:hover {
+  background: rgba(5, 22, 72, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .field-group--cols-2,
+  .field-group--cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .field-wrapper--inline {
+    flex-direction: column;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}

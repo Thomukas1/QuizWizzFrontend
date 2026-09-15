@@ -1,0 +1,14 @@
+.bop-meter-bg {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' fill='none'%3E%3Cpath d='M0 60 Q50 25 100 60 T200 60 T300 60 T400 60' stroke='rgba(80,65,231,0.4)' stroke-width='2'/%3E%3Cpath d='M0 100 Q50 130 100 100 T200 100 T300 100 T400 100' stroke='rgba(110,99,231,0.3)' stroke-width='1.5'/%3E%3Cpath d='M0 140 Q50 115 100 140 T200 140 T300 140 T400 140' stroke='rgba(80,65,231,0.2)' stroke-width='1.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' fill='none'%3E%3Cpath d='M0 80 Q20 60 40 80 T80 80 T120 80 T160 80 T200 80 T240 80 T280 80 T300 80' stroke='rgba(80,65,231,0.25)' stroke-width='1'/%3E%3Cpath d='M0 120 Q20 140 40 120 T80 120 T120 120 T160 120 T200 120 T240 120 T280 120 T300 120' stroke='rgba(110,99,231,0.18)' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 400px 100%, 300px 100%;
+  background-position-x: 0, 0;
+  animation: bopWaveScroll 24s linear infinite;
+}
+
+@keyframes bopWaveScroll {
+  0% { background-position-x: 0, 0; }
+  100% { background-position-x: -1200px, -1200px; }
+}

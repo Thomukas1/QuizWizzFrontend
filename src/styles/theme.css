@@ -1,0 +1,200 @@
+/* ============================================================
+   Design Tokens — Single source of truth for the design system
+   CSS custom properties used by both Tailwind and component CSS
+   ============================================================ */
+
+:root {
+  /* Raw values — used in SVG fills, text-shadows, and Tailwind raw tokens */
+  --white: #FFFFFF;
+  --black: #051648;             /* Deep Navy — darkest tone */
+
+  /* ── Palette — swap these 10 values to retheme the entire app ─────────── */
+  --p-navy:    #051648;         /* Deep Navy      – darkest background */
+  --p-cobalt:  #0C286F;         /* Imperial Blue  – card surfaces */
+  --p-blue:    #113CB2;         /* Persian Blue   – brand & interactive */
+  --p-lime:    #B6F833;         /* Green Yellow   – primary accent */
+  --p-lime-2:  #91CA2F;         /* Yellow Green   – secondary accent / hover */
+  --p-text:    #D3D6D7;         /* Alabaster Grey – body text */
+  --p-steel:   #77939E;         /* Cool Steel     – muted text & borders */
+  --p-sage:    #C1D49C;         /* Tea Green      – soft decorative text */
+  --p-error:   #E8344A;         /* Coral Red      – error & danger */
+  --p-warning: #F5A623;         /* Amber          – warnings */
+
+  /* ── Semantic roles — what components reference ───────────────────────── */
+
+  /* Brand & accent */
+  --brand:      var(--p-blue);
+  --accent:     var(--p-lime);
+  --accent-dim: var(--p-lime-2);
+
+  /* Backgrounds */
+  --bg-primary:   var(--p-navy);
+  --bg-surface:   var(--p-cobalt);
+  --bg-secondary: var(--p-navy);    /* recessed items inside surface cards */
+  --bg-input:     var(--p-navy);
+
+  /* Text */
+  --text-primary: var(--p-text);    /* Alabaster Grey — body text */
+  --text-muted:   var(--p-steel);   /* Cool Steel — secondary/dim text */
+  --text-soft:    var(--p-sage);    /* Tea Green — decorative text */
+  --text-alt:     var(--p-navy);    /* Deep Navy — text on accent backgrounds */
+
+  /* Border */
+  --border-color: rgba(119, 147, 158, 0.3);   /* Cool Steel at 30% — structural card/nav edges */
+  --divider:      rgba(255, 255, 255, 0.2);   /* Hairline separator between list rows & sections */
+
+  /* Status */
+  --color-error:   var(--p-error);
+  --color-success: var(--p-lime);   /* success shares the accent */
+  --color-warning: var(--p-warning);
+  --color-info:    var(--p-blue);
+
+  /* Trait accents — the four elements each artist is built from */
+  --facet-personality: var(--p-warning);   /* amber  */
+  --facet-appearance:  #B98CFF;            /* violet */
+  --facet-voice:       #4F9DE0;            /* sky    */
+  --facet-taste:       var(--p-sage);      /* sage   */
+
+  /* Data visualization — stat bar colors (palette-derived) */
+  --stat-energy:      var(--accent);       /* Lime Green — vitality */
+  --stat-focus:       var(--brand);        /* Persian Blue — concentration */
+  --stat-inspiration: var(--text-soft);    /* Tea Green — creativity */
+
+  /* Component internals */
+  --track-bg: rgba(255, 255, 255, 0.15);  /* slider/progress track on dark bg */
+
+  /* Typography - Font Families */
+  --font-display: 'Xirod', sans-serif;
+  --font-body: 'Masicu', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  /* Secondary display face — soft geometric, for labels and short headings that
+     need weight without the density of --font-display. */
+  --font-accent: 'GeometrySoft', var(--font-display);
+
+  /* Typography - Sizes (Mobile-first) */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 40px;
+
+  /* Heading Styles */
+  --heading-h1-size: var(--font-size-xl);
+  --heading-h2-size: var(--font-size-lg);
+  --heading-h3-size: var(--font-size-base);
+
+  --heading-h1-weight: 700;
+  --heading-h2-weight: 600;
+  --heading-h3-weight: 600;
+
+  --heading-h1-line-height: 1.2;
+  --heading-h2-line-height: 1.3;
+  --heading-h3-line-height: 1.4;
+
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+  --space-4xl: 48px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 50%;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.5);
+
+  /* Hero layout */
+  --hero-height: 350px;
+  --hero-overlap: 100px;
+
+  /* Strip #root reserves at the bottom of every page for the fixed NavBar and
+     the mini player above it. A fill that has to reach the very bottom of the
+     page must paint past this, so it can't stay a bare number in index.css. */
+  --app-bottom-inset: 130px;
+
+  /* Z-indexes */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 500;
+  --z-modal: 1000;
+  --z-tooltip: 1100;
+  /* Above everything it's covering — including a modal — but under the toast
+     that reports how the locked action turned out. */
+  --z-lock: 1150;
+  --z-notification: 1200;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+}
+
+
+/* ============================================================
+   Animations
+   ============================================================ */
+
+@keyframes diagonalScroll {
+  /* -33.333% of the 300%-sized element == one full viewport (same travel
+     distance as the old -50% of a 200% element), so the motion is unchanged.
+     translate3d keeps it on the compositor. */
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-33.333%, -33.333%, 0); }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-150%); }
+  30% { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Weak breathing glow for the eyebrow kicker (.eyebrow). currentColor keeps it
+   tied to the accent token, so it stays correct if the palette is reswapped.
+   A soft dark shadow underneath keeps the label legible on the busy bg. */
+@keyframes accentPulse {
+  0%, 100% {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 2px currentColor;
+  }
+  50% {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 9px currentColor;
+  }
+}
+
+/* Responsive Typography */
+@media (min-width: 768px) {
+  :root {
+    --heading-h1-size: var(--font-size-3xl);
+    --heading-h2-size: var(--font-size-xl);
+    --font-size-base: 16px;
+    --font-size-sm: 16px;
+  }
+}

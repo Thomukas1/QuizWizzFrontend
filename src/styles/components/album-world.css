@@ -1,0 +1,112 @@
+/* ============================================================
+   Album world — the background for a commissioned album page
+
+   An album is the thing a room paid for: their event, their record, the one page
+   they'll open together all night and come back to afterwards. The default
+   diagonal stripes are the label's everyday chrome and read as a list; this
+   dresses the room instead. A slow pinwheel twirl, fog that drifts across it,
+   and one lime bloom low in the frame — the spotlight, still deciding, which is
+   exactly what an album is doing while the group votes a song toward its music
+   video.
+
+   Scoped to `body.album-world`, which AlbumPage adds while it's mounted. It
+   *overrides* body::before rather than adding a layer on top, so the stripes and
+   the twirl can never both be on screen. Both layers stay at z-index -2 exactly
+   as the default does, which keeps -1 free as the section-fill plane.
+
+   Restraint still applies (see THEME.md): the twirl is navy-on-cobalt like the
+   stripes it replaces, the fog is brand blue, and lime — the spotlight, the
+   scarcest colour we have — appears once, at 14%, never resolving.
+   ============================================================ */
+
+/* The twirl. Squared off at 300vmax and centred on the viewport (rather than the
+   stripes' 300%/-50% box, whose centre sits off-screen at 100vw/100vh): a
+   pinwheel has to rotate about a point the eye can find, and that point is the
+   middle of the page. Sized off vmax so the rotation can never sweep an edge
+   into frame on any aspect ratio. Margins, not translate — transform belongs to
+   the animation. */
+body.album-world::before {
+  top: 50%;
+  left: 50%;
+  width: 300vmax;
+  height: 300vmax;
+  margin: -150vmax 0 0 -150vmax;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    var(--p-navy) 0deg 6deg,
+    var(--p-cobalt) 6deg 12deg
+  );
+  animation: albumTwirl 150s linear infinite;
+}
+
+/* The fog. Drifts against the twirl — opposite direction, unsteady easing, never
+   returning to where it started — so neither layer lets the eye settle. Its top
+   gradient is a navy haze over the pinwheel's centre: it hides the moiré where
+   the wedges converge and buys back the contrast the page's text needs. The rest
+   is blue weather, plus the lime bloom offset from centre.
+
+   Painted at viewport size and scaled past the edges, so every offset below
+   reads as a plain percentage of what's actually on screen. */
+body.album-world::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 44%,
+      var(--p-navy) 0%,
+      color-mix(in srgb, var(--p-navy) 72%, transparent) 20%,
+      transparent 48%
+    ),
+    radial-gradient(
+      30% 24% at 28% 64%,
+      color-mix(in srgb, var(--p-lime) 14%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      62% 42% at 16% 20%,
+      color-mix(in srgb, var(--p-blue) 55%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      54% 44% at 86% 72%,
+      color-mix(in srgb, var(--p-cobalt) 85%, transparent) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      42% 30% at 62% 90%,
+      color-mix(in srgb, var(--p-blue) 32%, transparent) 0%,
+      transparent 70%
+    );
+  will-change: transform;
+  backface-visibility: hidden;
+  animation: albumDrift 40s ease-in-out infinite alternate;
+}
+
+@keyframes albumTwirl {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Scale never drops below 1.5, which is the overscan that keeps the rotation and
+   the translation from pulling an edge into frame. */
+@keyframes albumDrift {
+  0% { transform: scale(1.5) rotate(-4deg) translate3d(-2%, 1%, 0); }
+  50% { transform: scale(1.68) rotate(2deg) translate3d(2%, -2%, 0); }
+  100% { transform: scale(1.55) rotate(6deg) translate3d(1%, 2%, 0); }
+}
+
+/* Motion is the whole idea here, so with it off the layers stay — the fog just
+   holds its widest frame instead of breathing. */
+@media (prefers-reduced-motion: reduce) {
+  body.album-world::before {
+    animation: none;
+  }
+
+  body.album-world::after {
+    animation: none;
+    transform: scale(1.6);
+  }
+}

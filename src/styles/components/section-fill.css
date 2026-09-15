@@ -1,0 +1,43 @@
+/* ============================================================
+   Section fill — a flat colour plane behind one section
+
+   Drop into any `position: relative` section to break up the animated stripes
+   and mark a change of mood ("you're done reading, now you're ordering").
+
+   The colour is *not* set here on purpose: this file is unlayered, so it would
+   beat Tailwind's @layer utilities and make `bg-*` at the call site do nothing.
+   The class does the layering, the caller does the colour:
+
+     <section className="relative ...">
+       <div className="section-fill bg-brand" aria-hidden="true" />
+       ...content...
+     </section>
+
+   How the layering works: the animated background sits at z-index -2, so -1 is
+   a free plane above it but still below every normal-flow element. This only
+   holds while no ancestor creates a stacking context — a `transform`, `filter`,
+   `opacity` below 1, `isolation` or `will-change` anywhere up the tree would
+   trap the -1 inside it and the fill would swallow the section's own content.
+   The section it's dropped into needs `position: relative` (with z-index auto,
+   which does *not* create a context) for the fill to size to it.
+   ============================================================ */
+
+/* Full-bleed: #root is a 430px centred column inside body's side padding, so an
+   inset:0 fill would only ever be as wide as the column. 50% is half the
+   section, so `50% - 50vw` puts the left edge on the viewport's edge no matter
+   how wide the screen gets, and the colour runs the whole way across. */
+.section-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 50vw);
+  width: 100vw;
+  z-index: -1;
+}
+
+/* For a fill that ends the page: paints on past the section's bottom edge and
+   through the inset #root reserves for the fixed NavBar, so the colour reaches
+   the very bottom instead of stopping short and exposing a strip of stripes. */
+.section-fill-to-page-bottom {
+  bottom: calc(-1 * var(--app-bottom-inset));
+}

@@ -1,0 +1,123 @@
+/* ============================================================
+   Dropdown — custom single-select with a height-capped,
+   scrollable options panel (native <select> can't be styled
+   this way). Trigger mirrors the .select / input look.
+   ============================================================ */
+
+.dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.dropdown-trigger:hover:not(:disabled) {
+  border-color: var(--blue-secondary);
+}
+
+.dropdown.open .dropdown-trigger,
+.dropdown-trigger:focus {
+  outline: none;
+  border-color: var(--blue-main);
+  box-shadow: 0 0 0 3px rgba(80, 65, 231, 0.1);
+}
+
+.dropdown-trigger.error {
+  border-color: var(--color-error);
+  background: rgba(255, 47, 31, 0.05);
+}
+
+/* No value chosen yet — read as a placeholder, like input::placeholder */
+.dropdown-trigger.placeholder {
+  color: var(--text-muted);
+}
+
+/* Selected value (+ optional emoji) on the left of the trigger */
+.dropdown-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dropdown-emoji {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.dropdown-caret {
+  flex-shrink: 0;
+  margin-left: var(--space-md);
+  transition: transform var(--transition-base);
+}
+
+.dropdown.open .dropdown-caret {
+  transform: rotate(180deg);
+}
+
+/* The scrollable popup — capped height, scrolls inside itself */
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  left: 0;
+  right: 0;
+  z-index: var(--z-dropdown);
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-xs);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: slideIn var(--transition-fast);
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.dropdown-option:hover {
+  background: var(--bg-surface);
+}
+
+.dropdown-option.selected {
+  background: var(--blue-main);
+  color: var(--white);
+  font-weight: var(--font-weight-medium);
+}

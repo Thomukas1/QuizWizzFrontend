@@ -1,0 +1,87 @@
+/* ============================================================
+   Mini player — expand affordance hint
+   The bar is tappable but doesn't look it, so the first time a track
+   starts we pop a shining "Click to expand" pill above its right edge:
+   it rises with a slight overshoot, holds for 3s while a highlight
+   sweeps across it, then slides back down and fades out.
+   Timing is mirrored by HINT_MS in MiniPlayer.tsx — change both.
+   ============================================================ */
+
+.expand-hint {
+  position: absolute;
+  bottom: 100%;
+  right: var(--space-md);
+  margin-bottom: var(--space-sm);
+  pointer-events: none;          /* never intercepts a tap on the bar */
+  z-index: 1;
+
+  /* The pill itself — dark, so it reads against the lime bar below it
+     and the page behind it. */
+  overflow: hidden;              /* clips the shine sweep, not the glow */
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  background: var(--black);
+  border: 1px solid var(--accent);
+  box-shadow:
+    0 0 14px rgba(182, 248, 51, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+
+  font-family: var(--font-accent);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  color: var(--accent);
+
+  opacity: 0;
+  animation: expandHint 3.7s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+}
+
+/* Rise + overshoot, hold, then slide down and out. The long flat middle
+   is the 3s read window. */
+@keyframes expandHint {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.92); }
+  6%   { opacity: 1; transform: translateY(-3px) scale(1.04); }
+  11%  { transform: translateY(0) scale(1); }
+  89%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(16px) scale(0.96); }
+}
+
+/* Highlight sweep — travels across the pill twice while it's held. */
+.expand-hint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  transform: translateX(-100%);
+  animation: expandHintShine 1.5s ease-in-out 0.35s 2;
+}
+
+@keyframes expandHintShine {
+  to { transform: translateX(100%); }
+}
+
+/* Reduced motion — keep the hint (it carries the information) but let it
+   simply fade in and out on the same schedule, with no travel or shine. */
+@media (prefers-reduced-motion: reduce) {
+  .expand-hint {
+    animation: expandHintFade 3.7s ease forwards;
+  }
+
+  .expand-hint::after {
+    animation: none;
+    opacity: 0;
+  }
+
+  @keyframes expandHintFade {
+    0%   { opacity: 0; }
+    6%   { opacity: 1; }
+    89%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}

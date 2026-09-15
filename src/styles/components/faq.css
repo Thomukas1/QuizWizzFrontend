@@ -1,0 +1,114 @@
+/* ============================================================
+   FAQ — sage-branded accordion card
+
+   A card type of its own, deliberately unlike .frosted-card: no blur, no
+   heavy brand border, no shadow. Where the frosted card is a raised pane of
+   glass, this is a flat sage-tinted panel that sits *in* the page — the FAQ is
+   the quiet, opt-in part of the pitch and shouldn't shout over the form
+   beneath it.
+
+   Everything sage here is mixed from --p-sage, so the whole card retints from
+   that one palette value.
+   ============================================================ */
+
+.faq-card {
+  background: color-mix(in srgb, var(--p-sage) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--p-sage) 30%, transparent);
+  border-radius: var(--radius-lg);
+  /* The title bar is full-bleed to the card edge — clip it to the radius
+     rather than rounding its corners separately. */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The card's own label, filled sage: the one solid block of brand colour on the
+   page, so the FAQ announces itself without a heading floating above it. Sage
+   is a light tone, so this is one of the few places text goes navy-on-colour. */
+.faq-title {
+  background: var(--p-sage);
+  color: var(--text-alt);
+  font-family: var(--font-accent);
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  line-height: 1.2;
+  /* Caps is the bar's styling, not the caller's — consumers pass a normally
+     written title and the label treatment happens here. */
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: var(--space-sm) var(--space-lg);
+  /* The base h2 rule adds a dark text-shadow to carry headings over the busy
+     page background. There's no background to fight here and the text is dark
+     on a light fill, so it only muddies the bar. */
+  text-shadow: none;
+}
+
+/* Rows carry the inset the card gave up to let the bar bleed. */
+.faq-list {
+  padding: 0 var(--space-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hairline between rows, sage rather than the global white --divider. Drawn on
+   the row so the last one can drop it without a border on the card itself. */
+.faq-item + .faq-item {
+  border-top: 1px solid color-mix(in srgb, var(--p-sage) 18%, transparent);
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-lg) 0;
+  text-align: left;
+  cursor: pointer;
+
+  /* One step up from the answer beneath it — the questions are what you scan,
+     so they lead; the answer is what you read once you've stopped. */
+  font-family: var(--font-accent);
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--p-sage);
+  transition: color var(--transition-fast);
+}
+
+.faq-question:hover,
+.faq-question[aria-expanded='true'] {
+  color: var(--accent);
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  font-size: var(--font-size-base);
+  line-height: 1;
+  transition: transform var(--transition-base);
+}
+
+.faq-question[aria-expanded='true'] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+/* Collapsed by max-height: the answers are a few lines, so a generous ceiling
+   is cheaper than measuring the content, and it animates where height:auto
+   wouldn't. */
+.faq-answer {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height var(--transition-base);
+}
+
+.faq-answer.open {
+  max-height: 600px;
+}
+
+.faq-answer > div {
+  padding-bottom: var(--space-lg);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--text-primary);
+}

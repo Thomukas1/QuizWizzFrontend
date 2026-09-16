@@ -39,6 +39,28 @@ import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwi
 const PLAYLIST: { gameId: string; title: string }[] = [{ gameId: 'quiz-warmup', title: 'Warmup' }];
 
 /**
+ * **Dev only: `/host?fast` shortens every clock in the playlist entry.**
+ *
+ * Walking ten warmup questions end to end at the real pace is five minutes of
+ * sitting still, which is enough friction that a run-through doesn't get done.
+ * The keys are the server module's own config — the engine merges a playlist
+ * entry over `defaultConfig`, so naming a subset here overrides exactly those
+ * and leaves `content` and `pointsCorrect` where they belong.
+ *
+ * Off unless the flag is in the URL, so the shipped path still sends `{}` and
+ * the server stays the only place the real timings are written down.
+ */
+const FAST_CONFIG: Record<string, unknown> = {
+  introMs: 1_000,
+  itemDurationMs: 5_000,
+  lastChanceBufferMs: 1_000,
+  lockPauseMs: 300,
+};
+
+const configForPlaylist = (): Record<string, unknown> =>
+  new URLSearchParams(window.location.search).has('fast') ? FAST_CONFIG : {};
+
+/**
  * How long to wait for the playlist to land before handing the button back.
  *
  * It arrives as a phase broadcast on the same socket, so this is a failsafe
@@ -118,10 +140,11 @@ export function NextUp({ phase, game, upNext, gameCount, command, connected }: N
   const go = () => {
     if (gameCount === 0 && phase === 'LOBBY') {
       setArming(true);
-      // No config: every key has a default on the server, the content id
-      // included. Naming one here would be a second copy of something only the
-      // server can resolve.
-      command('setPlaylist', { playlist: PLAYLIST.map(entry => ({ gameId: entry.gameId, config: {} })) });
+      // Empty config unless `?fast` is set: every key has a default on the
+      // server, the content id included. Naming one here would be a second copy
+      // of something only the server can resolve.
+      const config = configForPlaylist();
+      command('setPlaylist', { playlist: PLAYLIST.map(entry => ({ gameId: entry.gameId, config })) });
       return;
     }
     command('next');

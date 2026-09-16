@@ -12,6 +12,9 @@ import { HostLobbyScene } from './HostLobbyScene';
 import { HostGameScene } from './HostGameScene';
 import { HostResultsScene } from './HostResultsScene';
 
+/** Hostnames that mean "this device" and so mean nothing to a phone. */
+const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
 /**
  * **The television.** The host connection, the show, and the only client allowed
  * to send commands. There is no separate admin view — this is it.
@@ -65,7 +68,17 @@ export default function HostPage() {
     // The server answers a relative `/play` unless QUIZWIZZ_PLAY_URL is set, so
     // resolve against this origin — which is also the right fallback on a reload,
     // when there is no login response to read.
-    return new URL(fromLogin || '/play', window.location.origin).href;
+    //
+    // Except on a dev machine: the host opens `localhost:5173`, and `localhost`
+    // on the phone reading the QR is the phone. `vite --host` binds the LAN
+    // address too and the config plugin hands it over, so prefer it whenever the
+    // page is being served from loopback. A relative `joinUrl` follows along; an
+    // absolute one from the server is a deliberate answer and is left alone.
+    const origin =
+      LOOPBACK.has(window.location.hostname) && window.__LAN_ORIGIN__
+        ? window.__LAN_ORIGIN__
+        : window.location.origin;
+    return new URL(fromLogin || '/play', origin).href;
   }, [location.state]);
 
   const feed = useMemo<EmojiFeed | null>(

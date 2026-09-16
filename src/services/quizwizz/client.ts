@@ -8,8 +8,30 @@ import type { QuizWizzReason } from './protocol';
  *
  * For phones on the LAN both must point at the machine's **IP**, not
  * `localhost`: a phone resolving `localhost` resolves itself.
+ *
+ * In dev that last part is done for you. A phone that scanned the host's QR
+ * loaded this page from `192.168.x.x:5173`, so if the configured API is on
+ * loopback it means "the dev machine" and the phone is the one client that
+ * reads it wrong — borrow the hostname the page itself arrived on. Set
+ * `VITE_API_URL` to a real host and nothing here fires; builds never reach it.
  */
-export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const configured = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
+
+function lanAdjusted(base: string): string {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return base;
+  const loopback = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+  if (loopback.has(window.location.hostname)) return base;
+  try {
+    const url = new URL(base);
+    if (!loopback.has(url.hostname)) return base;
+    url.hostname = window.location.hostname;
+    return url.href.replace(/\/+$/, '');
+  } catch {
+    return base;
+  }
+}
+
+export const API_URL = lanAdjusted(configured);
 
 export const WS_URL =
   import.meta.env.VITE_WS_URL || `${API_URL.replace(/^http/, 'ws')}/quizwizz/socket`;

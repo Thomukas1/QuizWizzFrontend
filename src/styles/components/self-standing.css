@@ -1,0 +1,57 @@
+/* ============================================================
+   Self standing — your own row, above the room's
+   ============================================================
+   Phone only. The television has no idea whose eyes are on it; the phone does,
+   and this is the one thing it can say that the TV can't.
+
+   It wraps a one-row `<Leaderboard>` rather than restyling one, so everything
+   inside here is frame: a label, a lift off the background, and the gap that
+   separates "you" from "everybody". */
+
+.self-standing {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  /* The separation. Bigger than the list's own row gap by enough that the eye
+     reads a break rather than a wider row — if these two were the same number
+     the card would just look like the top of the list. */
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--divider);
+}
+
+.self-standing__label {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* The list inside is one row and can never overflow, so it must not be able to
+   scroll or to claim flex space the standings below it need. */
+.self-standing .leaderboard {
+  overflow: visible;
+  flex: none;
+}
+
+/* Marked in the accent, so it reads as yours rather than as the top of the
+   list. */
+.self-standing .leaderboard__row {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Unless there is a medal on it, which outranks the marking: that you are
+   second is a louder fact about you than that you are you, and it is the one
+   the room is about to read off the television. Stated here rather than left to
+   the cascade — the rule above is two classes deep and would otherwise paint
+   over the medal it inherits from `leaderboard.css`. */
+.self-standing .leaderboard__row--medal-1,
+.self-standing .leaderboard__row--medal-2,
+.self-standing .leaderboard__row--medal-3 {
+  border-color: var(--medal);
+  box-shadow: inset 3px 0 0 var(--medal);
+}

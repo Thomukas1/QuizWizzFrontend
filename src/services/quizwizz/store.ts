@@ -6,6 +6,7 @@ import type {
   PublicPlayer,
   QuizWizzReason,
   ReactionOption,
+  ScorecardRow,
   ScoreTotal,
   ServerMessage,
   SessionSnapshot,
@@ -65,6 +66,20 @@ export interface QuizWizzState {
   game: GameRun | null;
   /** What `RESULTS` announces. Null means the next stop is `FINAL`. */
   upNext: GameRef | null;
+  /**
+   * **How the game that just ended went — the whole room, one row each.**
+   *
+   * Not a transient: it rides on the snapshot as well as on `session:phase`,
+   * which is the only reason a phone reconnecting mid-`RESULTS` gets a results
+   * screen with results on it. That also means it needs no phase branch — the
+   * server nulls it during `GAME` and in `LOBBY`/`FINAL`, so "is there a
+   * scorecard" is the question, not "which phase are we in".
+   *
+   * It is a superset of `scores.entries`, not a replacement: the ledger holds
+   * the payouts and this holds everybody, including the rows worth nothing,
+   * which is the whole reason it exists.
+   */
+  scorecard: ScorecardRow[] | null;
   players: PublicPlayer[];
   /**
    * This client's own projection — `toDisplay` for the host, `toPlayer` for a
@@ -86,7 +101,19 @@ export interface QuizWizzState {
   reactions: ReactionOption[];
 
   // ── Transient things a component reacts to rather than renders ───────────
-  /** The latest scoring pass, for "+3 — 1st fastest" flyups. */
+  /**
+   * The latest scoring pass — the ledger's own rows, for a "+3" flyup.
+   *
+   * **The results screen no longer reads this, and putting it back is the bug
+   * it was.** The ledger holds payouts only: a row worth nothing is never
+   * written, so a screen built from this could only show the people who scored.
+   * And it is an *event* rather than state — nothing re-sends it — so a client
+   * that reloaded during `RESULTS` came back to an empty list. `scorecard` is on
+   * the snapshot and carries the whole room; that is what this phase renders.
+   *
+   * Kept because an animation that fires *when points land* still wants the
+   * moment rather than the table.
+   */
   scores: { entries: PublicLedgerEntry[]; totals: ScoreTotal[] } | null;
   /**
    * Host only, for the particle field. `seq` ticks on every burst so an effect
@@ -110,6 +137,7 @@ const EMPTY: QuizWizzState = {
   gameCount: 0,
   game: null,
   upNext: null,
+  scorecard: null,
   players: [],
   view: null,
   you: null,
@@ -200,6 +228,7 @@ export function apply(message: ServerMessage): void {
         gameCount: s.gameCount,
         game: s.game,
         upNext: s.upNext,
+        scorecard: s.scorecard,
         players: s.players,
         view: s.view,
         you: s.you,
@@ -231,6 +260,10 @@ export function apply(message: ServerMessage): void {
         gameCount: p.gameCount,
         game: p.game,
         upNext: p.upNext,
+        // Straight through, including the nulls. The server clears it on the way
+        // into `GAME` and into `LOBBY`/`FINAL`, so assigning it unconditionally
+        // is what stops the previous game's table reappearing over the next one.
+        scorecard: p.scorecard,
         ...(p.phase === 'GAME' ? { ack: null } : { view: null }),
       });
       break;

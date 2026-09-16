@@ -148,7 +148,7 @@ export default function HostPage() {
         <HostResultsScene
           game={state.game}
           upNext={state.upNext}
-          entries={state.scores?.entries ?? []}
+          scorecard={state.scorecard}
           players={state.players}
           feed={feed}
         />

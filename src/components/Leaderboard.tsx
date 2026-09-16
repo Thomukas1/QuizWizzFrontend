@@ -16,6 +16,18 @@ import type { PublicPlayer } from '../services/quizwizz';
  * no scoreboard phase: a phase whose entire job was "now look at the standings"
  * was putting this same list on screen twice.
  *
+ * **Three columns: place, face, and everything else.** The row was five columns
+ * wide — rank, avatar, name, movement, score — and on the host that is a fifth
+ * of a television, where four of those five were fixed-width and the name got
+ * whatever was left, which was about four characters. Rank and its movement
+ * arrow are one stacked cell now, bought for the name: it is the only cell whose
+ * content the server doesn't control the width of.
+ *
+ * The score's *position* inside the third cell is the one thing the two sizes
+ * disagree about, and it is settled in CSS rather than here — right of the name
+ * on the phone, which has the width for it, under the name on the host, which
+ * doesn't. One markup, two rules; see `styles/components/leaderboard.css`.
+ *
  * Ordering lives in `standings.ts` and ranking lives on the server. This renders
  * whatever slice it is handed, in the order it is handed it.
  */
@@ -89,13 +101,7 @@ export function Leaderboard({
   }, [autoScroll, rows.length]);
 
   return (
-    // The movement column is added to every row or to none, never per-row:
-    // it is a column, and a cell that appears only on the players who moved
-    // would slide their score out of line with everybody else's.
-    <ol
-      ref={scroller}
-      className={`leaderboard leaderboard--${size}${movement ? ' leaderboard--moving' : ''}`}
-    >
+    <ol ref={scroller} className={`leaderboard leaderboard--${size}`}>
       {rows.map(player => {
         const moved = movement ? movementOf(player) : null;
         return (
@@ -105,34 +111,49 @@ export function Leaderboard({
               medals && player.rank <= 3 ? ` leaderboard__row--medal-${player.rank}` : ''
             }`}
           >
-            <span className="leaderboard__rank">{player.rank}</span>
+            {/* Rank and its movement are one cell, stacked. They are the same
+                fact stated twice — where you are, and how you got there — and
+                side by side they were two reserved gutters at opposite ends of
+                a row that had none to spare. The arrow is rendered for every
+                row or for none, never per-row: one that showed up only on the
+                players who moved would make their rows a line taller. */}
+            <span className="leaderboard__place">
+              <span className="leaderboard__rank">{player.rank}</span>
+              {movement && (
+                <span
+                  className={`leaderboard__move${moved ? ` leaderboard__move--${moved.direction}` : ''}`}
+                  aria-label={moved ? `${moved.places} ${moved.direction}` : 'no change'}
+                >
+                  {moved && (
+                    <>
+                      <span aria-hidden="true">{moved.direction === 'up' ? '▲' : '▼'}</span>
+                      {moved.places}
+                    </>
+                  )}
+                </span>
+              )}
+            </span>
+
             <Avatar
               avatar={player.avatar}
-              size={size === 'lg' ? 48 : 36}
+              size={size === 'lg' ? 44 : 36}
               seed={player.id}
               offline={!player.connected}
             />
-            <span className="leaderboard__name">{player.name}</span>
-            {movement && (
-              <span
-                className={`leaderboard__move${moved ? ` leaderboard__move--${moved.direction}` : ''}`}
-                aria-label={moved ? `${moved.places} ${moved.direction}` : 'no change'}
-              >
-                {moved && (
-                  <>
-                    <span aria-hidden="true">{moved.direction === 'up' ? '▲' : '▼'}</span>
-                    {moved.places}
-                  </>
-                )}
+
+            {/* Name and score, in one cell. Side by side on the phone, stacked
+                on the host — a `flex-direction` apart, and nothing here knows
+                which it got. */}
+            <span className="leaderboard__who">
+              <span className="leaderboard__name">{player.name}</span>
+              {/* The unit is a separate span so it can be sized and dimmed away
+                  from the number — on a television the score is the thing being
+                  read from three metres and "pts" is only there to say what it
+                  is, not to compete with it. */}
+              <span className="leaderboard__score">
+                {player.score}
+                <span className="leaderboard__unit">pts</span>
               </span>
-            )}
-            {/* The unit is a separate span so it can be sized and dimmed away
-                from the number — on a television the score is the thing being
-                read from three metres and "pts" is only there to say what it
-                is, not to compete with it. */}
-            <span className="leaderboard__score">
-              {player.score}
-              <span className="leaderboard__unit">pts</span>
             </span>
           </li>
         );

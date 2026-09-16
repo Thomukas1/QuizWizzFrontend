@@ -1,4 +1,4 @@
-import type { PublicPlayer } from '../services/quizwizz';
+import type { PublicPlayer, ScorecardRow } from '../services/quizwizz';
 
 /**
  * Reading standings off the roster.
@@ -18,6 +18,20 @@ import type { PublicPlayer } from '../services/quizwizz';
 /** Ascending by `rank`, which the server guarantees is 1-based, gapless and unshared. */
 export function byRank(players: PublicPlayer[]): PublicPlayer[] {
   return [...players].sort((a, b) => a.rank - b.rank);
+}
+
+/**
+ * Ascending by `place` — the scorecard's order for the screen that ends a game.
+ *
+ * **A different number from `rank`, deliberately.** `place` is within the game
+ * that just ended, and **ties share it and push the next player past**: two 2nds
+ * and no 3rd. `rank` is the evening's standing and is gapless and unshared
+ * because a podium seats exactly three people. Sorting is stable, so players
+ * sharing a place keep the order the server sent them in, and nothing here
+ * renumbers a tie to make the column look tidy.
+ */
+export function byPlace(scorecard: ScorecardRow[]): ScorecardRow[] {
+  return [...scorecard].sort((a, b) => a.place - b.place);
 }
 
 /**

@@ -72,6 +72,10 @@ export const GAMES: Record<string, GameComponents> = {
     Display: lazy(() => import('./quiz-warmup/Display')),
     Player: lazy(() => import('./quiz-warmup/Player')),
   },
+  'quiz-speedrun': {
+    Display: lazy(() => import('./quiz-speedrun/Display')),
+    Player: lazy(() => import('./quiz-speedrun/Player')),
+  },
 };
 
 /**

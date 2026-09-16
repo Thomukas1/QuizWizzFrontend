@@ -27,7 +27,7 @@
 @import './components/host-stage.css';
 @import './components/admin-panel.css';
 @import './components/join-invite.css';
-@import './components/awards.css';
+@import './components/scorecard.css';
 @import './components/podium.css';
 @import './components/confetti.css';
 
@@ -35,6 +35,7 @@
 @import './components/player-shell.css';
 @import './components/player-header.css';
 @import './components/player-intermission.css';
+@import './components/self-standing.css';
 @import './components/player-game.css';
 @import './components/reaction-bar.css';
 @import './components/join-page.css';
@@ -43,6 +44,7 @@
 /* QuizWizz — games. The round formats: one stylesheet for the shared quiz kit,
    and one per format that needs a screen the kit doesn't already draw. */
 @import './components/quiz-kit.css';
+@import './components/speedrun.css';
 
 /* Tailwind CSS */
 @tailwind base;

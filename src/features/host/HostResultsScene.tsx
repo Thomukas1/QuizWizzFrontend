@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { GameZone } from '../../components/host/GameZone';
 import { Dots } from '../../primitives/Dots';
 import type { EmojiFeed } from '../../components/EmojiStream';
-import type { GameRef, GameRun, PublicLedgerEntry, PublicPlayer } from '../../services/quizwizz';
-import { Avatar } from '../../components/Avatar';
+import type { GameRef, GameRun, PublicPlayer, ScorecardRow } from '../../services/quizwizz';
+import { Scorecard } from '../../components/host/Scorecard';
+import { byPlace } from '../../components/standings';
 
 /**
  * **`RESULTS` — the game has handed its awards over.**
@@ -13,9 +15,16 @@ import { Avatar } from '../../components/Avatar';
  * those covered — is the moment the points *land*: who gained what, and for
  * what reason.
  *
- * So the zone shows the ledger for this game and nothing else. The panel on the
+ * So the zone shows how this one game went and nothing else. The panel on the
  * left is already doing the standings and repeating them here would be the same
  * list twice on one screen, which is precisely the mistake `SCOREBOARD` was.
+ *
+ * **It reads `scorecard`, not the ledger.** It used to build the list from
+ * `score:update`, and that was wrong twice over: a row worth nothing is never
+ * written to an append-only ledger, so everyone who scored nothing vanished from
+ * the one screen that was about how the room did — and `score:update` is an
+ * event rather than state, so a host tab reloaded during `RESULTS` came back to
+ * an empty zone. The scorecard is on the snapshot and carries everybody.
  *
  * Along the bottom: what is coming. That line is the reason the phase exists at
  * all rather than cutting straight into the next game — the room needs a beat to
@@ -24,23 +33,18 @@ import { Avatar } from '../../components/Avatar';
 export function HostResultsScene({
   game,
   upNext,
-  entries,
+  scorecard,
   players,
   feed,
 }: {
   game: GameRun | null;
   upNext: GameRef | null;
-  entries: PublicLedgerEntry[];
+  /** Null only before the first phase message lands, or against an older server. */
+  scorecard: ScorecardRow[] | null;
   players: PublicPlayer[];
   feed: EmojiFeed | null;
 }) {
-  const byId = new Map(players.map(p => [p.id, p]));
-
-  // Biggest gain first — the flyups read top-down and the winner of the game
-  // should be the first name the room's eye lands on. Zero-delta rows are kept:
-  // "you scored nothing this round" is information, and dropping those names
-  // makes the list look like half the room stopped playing.
-  const awards = [...entries].sort((a, b) => b.delta - a.delta);
+  const rows = useMemo(() => byPlace(scorecard ?? []), [scorecard]);
 
   return (
     <GameZone
@@ -58,30 +62,10 @@ export function HostResultsScene({
         </p>
       }
     >
-      {awards.length === 0 ? (
-        <p className="subtle">No points this round.</p>
+      {rows.length === 0 ? (
+        <p className="subtle">No scores this round.</p>
       ) : (
-        <ol className="awards">
-          {awards.map(entry => {
-            const player = byId.get(entry.playerId);
-            if (!player) return null;
-            return (
-              <li key={entry.id} className="awards__row">
-                <Avatar avatar={player.avatar} size={48} seed={player.id} />
-                <span className="awards__name">{player.name}</span>
-                {/* The module wrote this — "1st fastest", "survived". It is the
-                    only explanation the room gets for a number, so it is not
-                    optional decoration. */}
-                <span className="awards__reason">{entry.reason}</span>
-                <span
-                  className={`awards__delta${entry.delta > 0 ? ' awards__delta--gain' : ''}`}
-                >
-                  {entry.delta > 0 ? `+${entry.delta}` : entry.delta || '—'}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        <Scorecard rows={rows} players={players} />
       )}
     </GameZone>
   );

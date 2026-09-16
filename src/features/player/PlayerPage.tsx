@@ -95,6 +95,7 @@ export default function PlayerPage() {
           <PlayerIntermission
             phase={state.phase}
             players={state.players}
+            youId={state.you?.playerId ?? null}
             reactions={state.reactions}
             upNext={state.upNext}
             onReact={react}

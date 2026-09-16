@@ -2,8 +2,15 @@
    Leaderboard — the standings, on either screen
    ============================================================
    One list, two sizes. `--sm` is a phone in a hand, `--lg` is a television
-   across a room; nothing else about the rows differs, which is the point of
-   having one component. */
+   across a room.
+
+   Same markup, same three columns, and **one difference: where the score sits.**
+   The phone has 430px of width and puts it on the right; the host's panel is a
+   fifth of a screen and puts it under the name, because a score beside the name
+   there reserves the width of the largest total anyone might reach and the name
+   is left with four characters. That is a width argument, not a taste one —
+   which is why it is two rules at the bottom of this file rather than two
+   components. */
 
 .leaderboard {
   list-style: none;
@@ -20,49 +27,69 @@
   scrollbar-color: var(--border-color) transparent;
 }
 
+/* Three columns, and the third one gets everything that is left.
+
+   The name is the thing that has to fit, so every other cell is measured in
+   what it actually needs rather than in round numbers: the host's panel is a
+   fifth of a television and the old five-column row spent that fifth on
+   reserved gutters, leaving about four characters for a name. Rank and
+   movement share one cell, the score sits under the name instead of beside
+   it, and what those two changes free up goes to the name. */
 .leaderboard__row {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
   /* The rows are re-ordered by the server, not by us — but they still move, and
      the moment they do is the loudest of the evening. Transform only. */
   transition: background var(--transition-fast);
-  gap: var(--space-md);
+  gap: var(--space-sm) var(--space-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
 }
 
+/* Rank over movement, one column. They are the same fact — where you are and
+   how you got there — and stacking them costs a line the avatar has already
+   paid for while giving the name back a whole column plus its gutter. */
+.leaderboard__place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+}
+
 .leaderboard__rank {
   font-family: var(--font-accent);
   font-weight: var(--font-weight-bold);
   color: var(--text-muted);
-  min-width: 1.6em;
-  text-align: right;
+  /* Exactly two tabular digits and not a pixel more. `ch` is the width of a
+     figure, so this is the real width of "99" rather than an em guess with
+     half a character of slack — and that slack, right-aligned, was the blank
+     step at the start of every row. */
+  min-width: 2ch;
+  text-align: center;
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
-/* Movement since the last completed game. The extra column exists for the whole
-   list or for none of it, so the scores stay in one line down the right edge —
-   see `<Leaderboard movement>`. */
-.leaderboard--moving .leaderboard__row {
-  grid-template-columns: auto auto 1fr auto auto;
-}
-
+/* Movement since the last completed game. Rendered for every row or for none —
+   see `<Leaderboard movement>` — because an arrow that appears only on the
+   players who moved would make their rows a line taller than everybody else's. */
 .leaderboard__move {
   display: inline-flex;
   align-items: center;
-  gap: 0.15em;
-  /* Reserves the width of the widest arrow + two digits, so a row with no
-     movement leaves a gap the same size rather than pulling its score left. */
-  min-width: 2.6em;
-  justify-content: flex-end;
+  justify-content: center;
+  gap: 0.1em;
   font-family: var(--font-accent);
-  font-size: 0.8em;
+  font-size: 0.62em;
   font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
   color: var(--text-muted);
+  /* Holds the line open when there is nothing to say, so a row that moved and
+     a row that didn't are the same height. */
+  min-height: 1.1em;
 }
 
 .leaderboard__move--up {
@@ -73,10 +100,23 @@
   color: var(--color-error);
 }
 
+/* The name and the score, in one cell. **How they sit in it is the one thing
+   the two sizes genuinely disagree about**, and the disagreement is about how
+   much width there is, not about taste — see the `--sm` and `--lg` blocks
+   below. Everything they share is here. */
+.leaderboard__who {
+  display: flex;
+  min-width: 0;
+}
+
 .leaderboard__name {
   font-family: var(--font-accent);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
+  line-height: 1.15;
+  /* The only cell whose width the server doesn't control, so it is the only one
+     allowed to give up and ellipsise. */
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -86,32 +126,83 @@
   font-family: var(--font-accent);
   font-weight: var(--font-weight-bold);
   color: var(--accent);
+  line-height: 1.2;
   /* Tabular figures, so a column of scores lines up instead of shimmering as
      the numbers change width. */
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  flex: none;
 }
 
 /* Says what the number is and then gets out of its way. Sized in `em` so it
-   tracks the row it is in — the `--lg` rows are more than twice the `--sm` ones
-   and a fixed 12px unit would vanish on a television. */
+   tracks the score it is attached to rather than the row — on the host the
+   score is already smaller than the name, and a unit sized off the row would
+   come out nearly as big as the number it is annotating. */
 .leaderboard__unit {
   margin-left: 0.3em;
   font-family: var(--font-body);
-  font-size: 0.62em;
+  font-size: 0.68em;
   font-weight: var(--font-weight-normal);
   color: var(--text-muted);
 }
 
-.leaderboard--sm .leaderboard__row { font-size: var(--font-size-base); }
+/* ── The phone ──────────────────────────────────────────────────────────────
+   **Side by side, and big.** A 430px strip is not short of width — it is the
+   host's fifth-of-a-television that is — so stacking here bought nothing and
+   cost everything: two undersized lines hugging the avatar with the right half
+   of the row left empty. Name on the left, score hard right, both at full row
+   size, and the row is one line tall again. */
 
-.leaderboard--lg {
+.leaderboard--sm .leaderboard__row {
+  /* A step up from body text. This is a gamepad read at arm's length in a dim
+     room, not a document. */
+  font-size: var(--font-size-lg);
+}
+
+.leaderboard--sm .leaderboard__who {
+  flex-direction: row;
+  /* Baseline, not centre: the name and the score are the same size here, and
+     two type sizes centred against each other sit a pixel off from the letters
+     they are next to. */
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--space-md);
 }
 
+/* Takes the slack, so the score is pinned to the right edge rather than
+   trailing whatever length the name happened to be. */
+.leaderboard--sm .leaderboard__name {
+  flex: 1;
+}
+
+/* ── The television ─────────────────────────────────────────────────────────
+   **Stacked, because there is no width to share.** The panel is a fifth of the
+   screen; a score beside the name reserves the width of the largest total
+   anyone might reach plus a gutter, and on this panel that was most of what the
+   name had. Under it, the two still line up with each other down every row and
+   the name gets the whole column. */
+
+.leaderboard--lg {
+  gap: var(--space-sm);
+}
+
+/* Smaller than it was. The old `1.5vw` ceiling was sized as if this panel were
+   the screen; it is a fifth of it, and every pixel past legible-at-three-metres
+   was coming straight out of the name. */
 .leaderboard--lg .leaderboard__row {
-  font-size: clamp(var(--font-size-lg), 1.5vw, 30px);
-  padding: var(--space-md) var(--space-lg);
+  font-size: clamp(var(--font-size-base), 1.2vw, 26px);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.leaderboard--lg .leaderboard__who {
+  flex-direction: column;
+  gap: 0.05em;
+}
+
+/* Second line, so it yields to the name rather than competing with it. The
+   number is still the accent and still the brightest thing in the row. */
+.leaderboard--lg .leaderboard__score {
+  font-size: 0.78em;
 }
 
 /* ── Medals ─────────────────────────────────────────────────────────────────

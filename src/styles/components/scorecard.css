@@ -1,0 +1,142 @@
+/* ============================================================
+   Scorecard — how the game that just ended went
+   ============================================================
+   The `RESULTS` zone's table. **Host only** — a phone between games shows the
+   standings and its own place in them, which is the thing a television across
+   the room cannot do well, and repeating this table on a 430px strip spends the
+   phone on something already three metres away and larger.
+
+   It replaced a list built from the ledger, and the difference is a row that
+   used to be missing rather than a restyle: the ledger holds payouts, so
+   everyone who scored nothing was absent from the one screen that was about how
+   the room did. Every row is here now, and **the zero rows are the point** —
+   they are dimmed, never dropped.
+
+   Four columns: place, face, name, delta. No metric and no reason. "7 correct"
+   is the arithmetic behind a number the room can already see; from three metres
+   between games the only two questions are where did I come and what did I get.
+   The name takes all the slack, because it is the only cell whose width the
+   server doesn't control. */
+
+.scorecard {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  width: min(100%, 900px);
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+  font-size: clamp(var(--font-size-base), 1.5vw, 30px);
+}
+
+.scorecard__row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+/* Within this game, and **not** the evening's rank: ties share a place and push
+   the next player past, so a column of these can read 1st, 2nd, 2nd, 4th. That
+   is the table being honest rather than tidy — see `byPlace` in standings.ts. */
+.scorecard__place {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  /* "10th" is the widest realistic label; figures are tabular so the column
+     lines up down every row instead of shimmering as the numbers change. */
+  min-width: 3.5ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* A player the roster no longer has. The row keeps its place; only the face is
+   gone, in the same 22% squircle `<Avatar>` draws. */
+.scorecard__ghost {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 22%;
+  border: 1px dashed var(--border-color);
+}
+
+.scorecard--dense .scorecard__ghost {
+  width: 36px;
+  height: 36px;
+}
+
+/* Hard against the avatar and running to the delta. Left-aligned, not centred:
+   a column of names that starts at a different x on every row is a column the
+   eye has to search rather than read down. */
+.scorecard__name {
+  justify-self: start;
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  line-height: 1.15;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scorecard__delta {
+  min-width: 3ch;
+  text-align: right;
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--text-muted);
+}
+
+.scorecard__delta--gain {
+  color: var(--accent);
+}
+
+/* Nothing pays negative today. The ledger and every total already accept one,
+   so it gets the colour that means something went against you rather than
+   turning up one evening as a bare minus in the colour that means you gained. */
+.scorecard__delta--loss {
+  color: var(--color-error);
+}
+
+/* Scored nothing. **Present and readable**, just not competing with the rows
+   that paid — this is the state the whole component exists to show. */
+.scorecard__row--blank {
+  background: transparent;
+}
+
+.scorecard__row--blank .scorecard__name {
+  color: var(--text-muted);
+}
+
+/* ── Many players ───────────────────────────────────────────────────────────
+   Enough rows that one column would scroll, so run two. Between games nobody
+   is waiting long enough to scroll a television, and a list that reads itself
+   scrolls past the name somebody is looking for. */
+
+.scorecard--dense {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--space-sm) var(--space-lg);
+  width: min(100%, 1400px);
+  font-size: clamp(var(--font-size-sm), 1.1vw, 22px);
+}
+
+.scorecard--dense .scorecard__row {
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-md);
+}

@@ -16,7 +16,7 @@ import { QuizCounts, QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../qui
  * ```
  *
  * `intro` exists so nobody wins by having a thumb already on the screen. It
- * matters least here and most in Deathmatch, which is exactly why the warmup
+ * matters least here and most in Speedrun, which is exactly why the warmup
  * teaches the rhythm with it.
  */
 export type WarmupStep = 'intro' | 'open' | 'locked' | 'reveal';
@@ -50,7 +50,7 @@ export interface WarmupPlayerView extends QuizPlayerBase {
      * computing a score.
      *
      * Here rather than on `QuizPlayerBase` because the kit cannot compute it.
-     * Scoring is the format's own, and Deathmatch pays for speed, so there is no
+     * Scoring is the format's own, and Speedrun pays for speed, so there is no
      * shared formula to hoist: each format projects its own.
      *
      * **Counts only items whose answer has already been shown.** That is the

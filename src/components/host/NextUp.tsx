@@ -31,12 +31,27 @@ import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwi
  * whole reason `setPlaylist` is lobby-only: a typo surfaces minutes before the
  * party rather than in front of it.
  *
- * A list rather than a picker because there is one game. When there are four,
- * this is still the playlist and the lobby still announces its first entry;
- * choosing between orders is the thing that will want a control, and it can have
- * one then.
+ * **This list is the only reason a second game happens.** `createSession` takes
+ * no playlist, so the server starts empty and `RESULTS.next` reads
+ * `gameIndex + 1 < playlist.length ? 'GAME' : 'FINAL'` — one entry here and the
+ * evening goes straight from the first game to the podium, which is not the
+ * server having an opinion about the order. Adding a format to the registry and
+ * forgetting this row is the way that looks like a bug.
+ *
+ * A list rather than a picker because the order is a decision made before the
+ * party, not during it. When there are enough formats that the order is worth
+ * choosing on the night, this is still the playlist and the lobby still
+ * announces its first entry — the picker is a control that can be added then.
+ *
+ * `config` is per entry and optional: everything has a default on the server,
+ * so an entry names a key only to *differ* from it. Speedrun's are in
+ * `_DOCS/quizzes/02-speedrun.md` — `winners`, `pointsEach`, `revealMode`,
+ * `revealStepMs`.
  */
-const PLAYLIST: { gameId: string; title: string }[] = [{ gameId: 'quiz-warmup', title: 'Warmup' }];
+const PLAYLIST: { gameId: string; title: string; config?: Record<string, unknown> }[] = [
+  // { gameId: 'quiz-warmup', title: 'Warmup' },
+  { gameId: 'quiz-speedrun', title: 'Speedrun' },
+];
 
 /**
  * **Dev only: `/host?fast` shortens every clock in the playlist entry.**
@@ -143,8 +158,16 @@ export function NextUp({ phase, game, upNext, gameCount, command, connected }: N
       // Empty config unless `?fast` is set: every key has a default on the
       // server, the content id included. Naming one here would be a second copy
       // of something only the server can resolve.
-      const config = configForPlaylist();
-      command('setPlaylist', { playlist: PLAYLIST.map(entry => ({ gameId: entry.gameId, config })) });
+      // The dev override goes *under* an entry's own config, not over it: `?fast`
+      // is there to get through a run-through, and a game that had to name a key
+      // to differ from the server's default meant it.
+      const fast = configForPlaylist();
+      command('setPlaylist', {
+        playlist: PLAYLIST.map(entry => ({
+          gameId: entry.gameId,
+          config: { ...fast, ...entry.config },
+        })),
+      });
       return;
     }
     command('next');

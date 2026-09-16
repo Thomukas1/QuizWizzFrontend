@@ -3,6 +3,7 @@ import { EmojiStream } from '../../components/EmojiStream';
 import type { EmojiFeed } from '../../components/EmojiStream';
 import { Leaderboard } from '../../components/Leaderboard';
 import { ReactionBar } from '../../components/player/ReactionBar';
+import { SelfStanding } from '../../components/player/SelfStanding';
 import { byRank } from '../../components/standings';
 import type { GameRef, Phase, PublicPlayer, ReactionOption } from '../../services/quizwizz';
 
@@ -24,6 +25,14 @@ import type { GameRef, Phase, PublicPlayer, ReactionOption } from '../../service
  * What is *in* that bar is the server's business, not this scene's: `reactions`
  * arrives on the snapshot already composed and goes straight through.
  *
+ * **And no scorecard.** The table of how the game just went belongs to the
+ * television and is host-only on purpose — `components/host/Scorecard.tsx`. A
+ * phone gets the standings and its own line in them, which is the one thing a
+ * screen three metres away cannot do well; a 430px strip spent on a table that
+ * is already up there, larger, is a strip spent repeating it. `scorecard` is on
+ * the wire for every client, so this is a rendering decision — it is made here,
+ * and it is made once.
+ *
  * No podium and no confetti. The television is doing the celebrating, and a
  * phone competing with it splits the room's attention at the one moment it was
  * all pointed the same way. What the phone offers instead is the thing the TV
@@ -34,6 +43,15 @@ import type { GameRef, Phase, PublicPlayer, ReactionOption } from '../../service
 interface PlayerIntermissionProps {
   phase: Phase | null;
   players: PublicPlayer[];
+  /**
+   * `snapshot.you.playerId`, used to pick your own row out of `players` for the
+   * card above the list. Null until the first snapshot lands, and on the beat
+   * where the roster has not caught up with it — both render as no card, which
+   * is why this is an id rather than a row: the score and the rank have to come
+   * out of the same roster the list below is drawn from, or the card and your
+   * line in the list could say two different numbers.
+   */
+  youId: string | null;
   /** `snapshot.reactions`, straight through to the bar. Not assembled here. */
   reactions: ReactionOption[];
   /** What `RESULTS` announces. Null means the podium is next. */
@@ -69,12 +87,14 @@ function headingFor(phase: Phase | null, upNext: GameRef | null): { title: strin
 export function PlayerIntermission({
   phase,
   players,
+  youId,
   reactions,
   upNext,
   onReact,
   onLeave,
 }: PlayerIntermissionProps) {
   const ranked = useMemo(() => byRank(players), [players]);
+  const me = useMemo(() => players.find(p => p.id === youId) ?? null, [players, youId]);
   const { title, note } = headingFor(phase, upNext);
 
   // Medals and movement are both withheld in the lobby, exactly as they are on
@@ -108,6 +128,11 @@ export function PlayerIntermission({
             <p className="player-intermission__title">{title}</p>
             {note && <p className="subtle text-sm">{note}</p>}
           </div>
+
+          {/* Pinned, like the heading. The whole point of this card is that you
+              never have to go looking for your own score — one that scrolls away
+              with the list is one you have to go looking for. */}
+          {me && <SelfStanding me={me} medals={played} movement={played} />}
 
           {ranked.length === 0 ? (
             <p className="subtle text-sm">Nobody else yet.</p>

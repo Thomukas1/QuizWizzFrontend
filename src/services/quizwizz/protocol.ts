@@ -195,6 +195,44 @@ export interface GameRun {
     title: string;
 }
 
+/**
+ * **One player's line on the screen that ends a game.**
+ *
+ * The scorecard is the whole room; ledger rows are only the payouts, and the
+ * difference is the point. A metric of zero pays nothing and so writes no ledger
+ * row, which means a results screen built from the ledger can only show the
+ * people who scored. This carries everyone, in one shape, for every format — the
+ * eight questions you got right, the place that came out of them, and what the
+ * ledger was told.
+ *
+ * **`metric` and `unit` are data, not prose.** `reason` is a sentence for a TV;
+ * a client that wants to render `7 correct → +7` should not have to parse one.
+ */
+export interface ScorecardRow {
+    playerId: string;
+    /** The game's own unit: 7 correct, 3 in the money, 412 hits. */
+    metric: number;
+    /** What the metric counts, for the line beside it. Invariant — never pluralised. */
+    unit: string;
+    /**
+     * Show points this game. **Zero is a real row**, and a negative one is a
+     * legal row the ledger and every total already handle.
+     */
+    delta: number;
+    /**
+     * Place within this game, 1-based.
+     *
+     * **Ties share a place and push the next player past** — two 2nds and no
+     * 3rd. Deliberately the opposite of `PublicPlayer.rank`, which is gapless and
+     * unshared because a podium holds exactly three people: this is a table of
+     * what happened, and a table that claims one of two identical scores came
+     * second is lying to make itself tidy.
+     */
+    place: number;
+    /** What the ledger was told, read off a television: "3 correct", "2nd fastest". */
+    reason: string;
+}
+
 /** Everything a freshly connected client needs to paint the current moment. */
 export interface SessionSnapshot {
     sessionId: string;
@@ -210,6 +248,15 @@ export interface SessionSnapshot {
      * that reconnects mid-`RESULTS` has no way to learn what is coming.
      */
     upNext: GameRef | null;
+    /**
+     * How the game that just ended went, one row per player.
+     *
+     * **Null until it has ended** — a game in progress has not been settled, and
+     * there is nothing here to read early. Like `upNext`, it has to be on the
+     * snapshot as well as on the phase message, or a phone reconnecting during
+     * `RESULTS` gets a results screen with no results on it.
+     */
+    scorecard: ScorecardRow[] | null;
     players: PublicPlayer[];
     /** The receiving client's own view, and where its deadline lives. Null outside `GAME`. */
     view: ViewFrame | null;
@@ -351,7 +398,7 @@ export type ServerMessage =
      * screen is something the module draws in its own projection now, with
      * whatever layout and pacing it wants.
      */
-    | { type: 'session:phase'; payload: { phase: Phase; gameIndex: number; gameCount: number; game: GameRun | null; upNext: GameRef | null } }
+    | { type: 'session:phase'; payload: { phase: Phase; gameIndex: number; gameCount: number; game: GameRun | null; upNext: GameRef | null; scorecard: ScorecardRow[] | null } }
     | { type: 'view:display'; payload: ViewFrame }
     | { type: 'view:player'; payload: ViewFrame }
     | { type: 'roster:update'; payload: { players: PublicPlayer[] } }

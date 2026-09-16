@@ -1,0 +1,478 @@
+/* ============================================================
+   Speedrun — the ring, and the cull
+   ============================================================
+   The one screen the quiz kit doesn't already draw. Everything up to the answer
+   is the kit's (`quiz-kit.css`) because the format's whole trick is that the
+   question looks exactly like the warmup's; this file is only the part where
+   being right stops being enough.
+
+   The ring is a ring of people, not a chart. It is read from three metres by a
+   room that is about to watch two thirds of it explode, so the faces are as
+   large as the count allows and nothing else on screen competes with them.
+
+   **Transform and opacity only.** Fifteen explosions and a glow run while the
+   whole room is watching, on a laptop also holding a websocket open — a colour
+   or a shadow animating here drops frames in front of everybody. */
+
+/* ── The television's reveal layout ─────────────────────────────────────────
+   Replaces the kit's three bands: a recap strip, then the ring taking the rest.
+   The question is gone, which is the point — the answer is a line of text now
+   and the people are the screen. */
+
+.quiz-display--ring {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+/* What was being asked, and what it turned out to be. Small and still there:
+   ten seconds of explosions is long enough for a room to lose the question, and
+   the host should not have to read it back out. */
+.speedrun-recap {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+  font-size: clamp(var(--font-size-base), 1.4vw, 26px);
+}
+
+.speedrun-recap__counter {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.speedrun-recap__prompt {
+  color: var(--text-muted);
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The correct option, in the colour the option grid just turned it. */
+.speedrun-recap__answer {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  color: var(--accent);
+}
+
+.speedrun-recap__key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.6em;
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-alt);
+  font-size: 0.85em;
+}
+
+/* The `answer` step's footer. The room has the correct option and not one word
+   about who got it — that gap is the crowd step's whole job, and filling it a
+   step early spends the format's best beat. */
+.speedrun-hold {
+  text-align: center;
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-lg), 1.8vw, 34px);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-soft);
+  letter-spacing: 0.02em;
+}
+
+/* ── The ring ───────────────────────────────────────────────────────────────
+   Seats are placed by the classic rotate / translate / counter-rotate, so the
+   faces stay upright while their positions go round. `--i` and `--n` come off
+   the component; `--ring` is the radius and `--seat` the face size, which
+   shrinks as the crowd grows. */
+
+/* **One variable sizes the whole thing**, and it is the constraint rather than
+   the content: the zone is 60% of a 16:9 screen with padding, so the field can
+   have ~52vw and ~58vh and must fit in both. The radius is a fraction of it,
+   which leaves 28% of the field as the margin the faces and their names sit in
+   — so the ring cannot grow past its band whatever the crowd does, and a name
+   is never clipped off the edge of a television.
+
+   Sizing the box from the radius instead (`ring * 2 + seat`) is the version
+   that overflows: `--seat` is a pixel value off the component and the two
+   units stop agreeing the moment somebody plays this on a different screen. */
+.crowd-circle {
+  --field: min(58vh, 52vw);
+  --ring: calc(var(--field) * 0.36);
+  position: relative;
+  width: var(--field);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  align-self: center;
+  justify-self: center;
+}
+
+.crowd-circle--empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: auto;
+}
+
+/* A whole room missing one is the best thing that happens all evening, so it is
+   said out loud in the colour that means something went wrong — and the joke is
+   that nothing did. */
+.crowd-circle__nobody {
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-2xl), 5vw, 90px);
+  color: var(--color-error);
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.crowd-circle__centre {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+  text-align: center;
+  pointer-events: none;
+}
+
+.crowd-circle__tally {
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-3xl), 6vw, 120px);
+  line-height: 1;
+  color: var(--text-soft);
+}
+
+.crowd-circle__tally-label {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-base), 1.3vw, 24px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The place going up, once the cull has finished and the payouts can be shown.
+   The biggest thing on the screen for the beat it is on it. */
+.crowd-circle__place-up {
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-3xl), 7vw, 150px);
+  line-height: 1;
+  color: var(--accent);
+  animation: place-land 420ms cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+@keyframes place-land {
+  from { transform: scale(0.55); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.crowd-circle__seat {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--seat);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25em;
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--i) * 360deg / var(--n)))
+    translateY(calc(var(--ring) * -1))
+    rotate(calc(var(--i) * -360deg / var(--n)));
+  /* Landing the ring: every face arrives at once, which is the crowd step. */
+  animation: seat-arrive 320ms ease-out both;
+}
+
+@keyframes seat-arrive {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.crowd-circle__face {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+.crowd-circle__ghost {
+  display: block;
+  width: var(--seat);
+  height: var(--seat);
+  /* The same 22% squircle `<Avatar>` uses, so a player who quit between the
+     question and the reveal leaves a hole the shape of everyone else. */
+  border-radius: 22%;
+  border: 1px dashed var(--border-color);
+}
+
+.crowd-circle__name {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  font-size: calc(var(--seat) * 0.2);
+  color: var(--text-primary);
+  max-width: calc(var(--seat) * 1.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Destroyed ──────────────────────────────────────────────────────────────
+   Right, and too slow. The tile is thrown outward and shattered; it keeps its
+   seat in the DOM so the ring never re-flows, which would move every remaining
+   face and make the cull read as the layout breaking rather than as people
+   going out. */
+
+.crowd-circle__seat--gone {
+  /* Outlasts the shards (620ms) so the last of the debris is still visible as
+     the tile goes — a seat that fades first takes its own explosion with it. */
+  animation: seat-destroy 700ms cubic-bezier(0.3, 0, 0.7, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes seat-destroy {
+  0%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.crowd-circle__seat--gone .crowd-circle__face {
+  animation: face-destroy 560ms cubic-bezier(0.3, 0, 0.7, 1) forwards;
+}
+
+@keyframes face-destroy {
+  0%   { transform: scale(1)    rotate(0deg); }
+  16%  { transform: scale(1.22) rotate(-6deg); }
+  100% { transform: scale(0.25) rotate(14deg); }
+}
+
+/* The shards. Mounted on every seat and invisible until its tile goes, so an
+   exploding tile never has to render into a different subtree mid-animation. */
+.crowd-circle__burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.crowd-circle__burst i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--seat) * 0.22);
+  height: calc(var(--seat) * 0.22);
+  margin: calc(var(--seat) * -0.11) 0 0 calc(var(--seat) * -0.11);
+  border-radius: var(--radius-full);
+  background: var(--color-warning);
+  opacity: 0;
+}
+
+/* Six directions, hand-placed. A loop would need a preprocessor and there are
+   six of them. */
+.crowd-circle__burst i:nth-child(1) { --dx:  1.0; --dy:  0.0; }
+.crowd-circle__burst i:nth-child(2) { --dx:  0.5; --dy:  0.87; background: var(--color-error); }
+.crowd-circle__burst i:nth-child(3) { --dx: -0.5; --dy:  0.87; }
+.crowd-circle__burst i:nth-child(4) { --dx: -1.0; --dy:  0.0; background: var(--color-error); }
+.crowd-circle__burst i:nth-child(5) { --dx: -0.5; --dy: -0.87; }
+.crowd-circle__burst i:nth-child(6) { --dx:  0.5; --dy: -0.87; background: var(--color-warning); }
+
+.crowd-circle__seat--gone .crowd-circle__burst i {
+  animation: shard 620ms cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes shard {
+  0% {
+    transform: translate(0, 0) scale(0.4);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(0, 0) scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform:
+      translate(
+        calc(var(--dx) * var(--seat) * 1.15),
+        calc(var(--dy) * var(--seat) * 1.15)
+      )
+      scale(0.15);
+    opacity: 0;
+  }
+}
+
+/* ── In the money ───────────────────────────────────────────────────────────
+   A place the server has unveiled. Never inferred from who is left standing —
+   see the component's note on the two clocks. */
+
+.crowd-circle__seat--won {
+  z-index: 1;
+}
+
+.crowd-circle__seat--won .crowd-circle__face {
+  animation: won-pop 420ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+@keyframes won-pop {
+  from { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  to   { transform: scale(1.08); }
+}
+
+/* The glow. A static shadow with a *pulsing ring* over it rather than an
+   animated shadow — the shadow is one paint, the ring is transform and opacity,
+   and fifteen animated shadows on a television is a slideshow. */
+.crowd-circle__seat--won .crowd-circle__face {
+  box-shadow: 0 0 calc(var(--seat) * 0.35) rgba(182, 248, 51, 0.55);
+  /* `<Avatar>`'s own 22% squircle, not a circle — a round halo on a rounded
+     square reads as a badge stuck behind the face. */
+  border-radius: 22%;
+}
+
+.crowd-circle__seat--won .crowd-circle__face::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--seat) * -0.08);
+  border-radius: 26%;
+  border: 2px solid var(--accent);
+  animation: won-ring 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes won-ring {
+  0%   { transform: scale(0.94); opacity: 0.9; }
+  70%  { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+/* Upper right, the way a payout lands in every game that ever paid one out. */
+.crowd-circle__points {
+  position: absolute;
+  top: calc(var(--seat) * -0.16);
+  right: calc(var(--seat) * -0.22);
+  display: grid;
+  place-items: center;
+  min-width: calc(var(--seat) * 0.46);
+  padding: 0 calc(var(--seat) * 0.1);
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-alt);
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  font-size: calc(var(--seat) * 0.28);
+  line-height: 1.5;
+  animation: points-land 480ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  animation-delay: 140ms;
+}
+
+@keyframes points-land {
+  from { transform: translateY(-40%) scale(0.3); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);   opacity: 1; }
+}
+
+/* The place and the time. **The time is the payoff** — a place with no number
+   beside it is just a name, and the whole point is seeing how close fourth was. */
+.crowd-circle__result {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  font-size: calc(var(--seat) * 0.2);
+  white-space: nowrap;
+  animation: seat-arrive 360ms ease-out 140ms both;
+}
+
+.crowd-circle__rank {
+  color: var(--accent);
+}
+
+.crowd-circle__time {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── The phone's verdict ────────────────────────────────────────────────────
+   The one quiz where a phone says how you did in words. The buttons already
+   said *whether* a step ago; this says **by how much**, which is a different
+   fact for every person in the room and cannot be told from three metres. */
+
+.speedrun-verdict {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  animation: verdict-in 260ms ease-out both;
+}
+
+@keyframes verdict-in {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.speedrun-verdict__text {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.02em;
+}
+
+.speedrun-verdict__time {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* In the money. */
+.speedrun-verdict--money {
+  border-color: var(--accent);
+}
+
+.speedrun-verdict--money .speedrun-verdict__text {
+  color: var(--accent);
+}
+
+/* Right, and either still waiting or just short. Sage, not coral: being too
+   slow is not an error, and the difference between this and a wrong answer is
+   the entire emotional content of the format. */
+.speedrun-verdict--near .speedrun-verdict__text {
+  color: var(--text-soft);
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+   The cull already collapses to its end state in the component. What is left
+   here is the decoration, and none of it carries information the layout does
+   not: a destroyed tile is still gone, a paid one still has its badge. */
+
+@media (prefers-reduced-motion: reduce) {
+  .crowd-circle__seat,
+  .crowd-circle__place-up,
+  .crowd-circle__result,
+  .crowd-circle__points,
+  .speedrun-verdict,
+  .crowd-circle__seat--won .crowd-circle__face {
+    animation: none;
+  }
+
+  .crowd-circle__seat--gone {
+    animation: none;
+    opacity: 0;
+  }
+
+  .crowd-circle__burst i,
+  .crowd-circle__seat--won .crowd-circle__face::after {
+    animation: none;
+    opacity: 0;
+  }
+}

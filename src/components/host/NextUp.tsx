@@ -1,0 +1,173 @@
+import { useEffect, useState } from 'react';
+import { ArmedButton } from '../../primitives/ArmedButton';
+import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwizz';
+
+/**
+ * **What happens when you press the key.** One control at the bottom of the
+ * remote: the name of the thing coming next, and the two ways to reach it.
+ *
+ * It replaced a playlist picker and a pair of unlabelled transport buttons. Both
+ * were answering the same question — *what does Space do right now* — and
+ * answering it in three places meant none of them said it outright. So the
+ * control names the destination and the button is the verb.
+ *
+ * **The phase decides all of it**, which is the only branch there is to make:
+ *
+ * | Phase | Names | Go | Skip |
+ * |---|---|---|---|
+ * | `LOBBY` | the first game of the playlist | starts it | — |
+ * | `GAME` | the game running | the next step of it | force-ends it |
+ * | `RESULTS` | `upNext`, or the podium when it's null | starts it | — |
+ * | `FINAL` | nothing | — | — |
+ *
+ * Skip appears during `GAME` alone, and that is the server's rule rather than a
+ * layout preference: `skipGame` is refused `wrong_phase` everywhere else, and a
+ * button whose only outcome is a toast is worse than no button.
+ */
+
+/**
+ * **The evening, in order.** Ids must match the *server's* registry — an id it
+ * doesn't know is refused `unknown_game` when the playlist is set, which is the
+ * whole reason `setPlaylist` is lobby-only: a typo surfaces minutes before the
+ * party rather than in front of it.
+ *
+ * A list rather than a picker because there is one game. When there are four,
+ * this is still the playlist and the lobby still announces its first entry;
+ * choosing between orders is the thing that will want a control, and it can have
+ * one then.
+ */
+const PLAYLIST: { gameId: string; title: string }[] = [{ gameId: 'quiz-warmup', title: 'Warmup' }];
+
+/**
+ * How long to wait for the playlist to land before handing the button back.
+ *
+ * It arrives as a phase broadcast on the same socket, so this is a failsafe
+ * rather than a timeout anyone should ever see — and the thing it protects
+ * against is a refused playlist leaving the button stuck saying "Starting…"
+ * with no way to press it again.
+ */
+const ARM_TIMEOUT_MS = 2_500;
+
+interface NextUpProps {
+  phase: Phase | null;
+  /** The game running, or the one that just did. */
+  game: GameRun | null;
+  /** The server's own "what's next". Null means the next stop is the podium. */
+  upNext: GameRef | null;
+  /** How many games are loaded. Zero is why Space would otherwise end the evening. */
+  gameCount: number;
+  command: (cmd: HostCommand, args?: Record<string, unknown>) => void;
+  connected: boolean;
+}
+
+export function NextUp({ phase, game, upNext, gameCount, command, connected }: NextUpProps) {
+  /**
+   * A press waiting on the playlist it just sent.
+   *
+   * `engine.createSession()` takes no argument, so a fresh session's playlist is
+   * empty and `LOBBY.next` reads `playlist.length ? 'GAME' : 'FINAL'` — one key
+   * in an empty lobby ends the evening on a podium nobody played for.
+   *
+   * Sending `setPlaylist` and `next` together would fix the ordinary case and
+   * keep exactly that failure for the one that matters: a refused playlist
+   * leaves `next` reading an empty one, and the room watches the game jump
+   * straight to the scores. So the press arms instead, and the `next` goes only
+   * once the server has said the playlist is there.
+   */
+  const [arming, setArming] = useState(false);
+
+  useEffect(() => {
+    if (!arming) return;
+
+    // It landed. `gameCount` comes off the phase broadcast `setPlaylist` sends,
+    // so this is the server's confirmation rather than an assumption about it.
+    if (gameCount > 0 && phase === 'LOBBY') {
+      setArming(false);
+      command('next');
+      return;
+    }
+
+    // Refused, or we left the lobby some other way. Either way the press is
+    // spent and the button comes back — a refusal has already raised its toast.
+    const id = setTimeout(() => setArming(false), ARM_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [arming, gameCount, phase, command]);
+
+  const playing = phase === 'GAME';
+  const over = phase === 'FINAL';
+
+  /**
+   * What the control names, and it is the *destination* in every phase but one.
+   * During a game the destination is another step of the same game, which is
+   * not a thing worth naming — so it names what is on instead.
+   */
+  const { eyebrow, title } = over
+    ? { eyebrow: "That's the lot", title: 'Game over' }
+    : playing
+      ? { eyebrow: 'Now playing', title: game?.title ?? 'This round' }
+      : {
+          eyebrow: 'Next up',
+          // In the lobby before anything is loaded the server has no opinion
+          // yet, so this is the host's: the first entry of the playlist Go is
+          // about to send. `upNext` takes over the moment it lands, and from
+          // `RESULTS` onwards it is the only source — including its null, which
+          // is the server saying the playlist is finished.
+          title: upNext?.title ?? (phase === 'LOBBY' ? PLAYLIST[0]?.title : null) ?? 'Final scores',
+        };
+
+  const go = () => {
+    if (gameCount === 0 && phase === 'LOBBY') {
+      setArming(true);
+      // No config: every key has a default on the server, the content id
+      // included. Naming one here would be a second copy of something only the
+      // server can resolve.
+      command('setPlaylist', { playlist: PLAYLIST.map(entry => ({ gameId: entry.gameId, config: {} })) });
+      return;
+    }
+    command('next');
+  };
+
+  return (
+    <div className="next-up">
+      <div className="next-up__billing">
+        <span className="eyebrow">{eyebrow}</span>
+        <span className="next-up__title">{title}</span>
+      </div>
+
+      <div className="next-up__actions">
+        {/*
+          The escape hatch, and the reason an unclaimed `next` during GAME can
+          safely be refused: `skipGame` force-ends the running game with no
+          awards without consulting the module, so a format that has hung — or
+          one nobody wants to sit through — can't hold the evening hostage.
+
+          Armed, because it silently costs everyone the points they were playing
+          for. Gone outside `GAME`, where the server refuses it anyway.
+        */}
+        {playing && (
+          <ArmedButton
+            className="admin-btn admin-btn--ghost"
+            armedClassName="admin-btn--armed"
+            disabled={!connected}
+            title="End the running game with no points awarded"
+            label="Skip ↦"
+            confirmLabel="Tap to skip"
+            onConfirm={() => command('skipGame')}
+          />
+        )}
+
+        {/* Space sends the same `next` and stays the primary control. This is
+            what you reach for when the room is watching and you'd rather not
+            look like you're typing. */}
+        <button
+          type="button"
+          className="admin-btn admin-btn--next"
+          disabled={!connected || over || arming}
+          onClick={go}
+        >
+          {arming ? 'Starting…' : 'Go →'}
+        </button>
+      </div>
+    </div>
+  );
+}

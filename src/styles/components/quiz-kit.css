@@ -1,0 +1,699 @@
+/* ============================================================
+   Quiz kit — the mechanic every quiz format shares
+   ============================================================
+   A question, some lettered options, a tally of who is in, and a reveal. Four
+   formats draw these and no two of them agree on anything else, which is why
+   this is a `games/`-scoped stylesheet rather than a root one: it encodes a
+   product concept. The timer next door does not, and that is why it is root.
+
+   Both layouts live here too — the television's three bands and the phone's —
+   because they are the standard quiz shape rather than the warmup's own. A
+   format with a genuinely different screen brings its own file; one that wants
+   a prompt over options over tiles should not have to re-describe it.
+
+   Read from three metres on one side and held in a hand on the other, so almost
+   nothing is shared between the two halves below except the vocabulary. */
+
+/* ============================================================
+   The television
+   ============================================================ */
+
+/* Inside `.game-zone__stage`, which centres and does not stretch its child —
+   hence the explicit fill. The three bands are this component's own: the zone's
+   top and bottom rows belong to the engine's scenes, and a module supplies
+   content, never layout. */
+.quiz-display {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(var(--space-md), 2vh, var(--space-2xl));
+  /* The rows stretch rather than centring, so the middle band is a definite
+     height the prompt and options can be centred *within* and clipped against.
+     Centring the rows themselves makes the band content-sized, and `min-height:
+     0` then has nothing to protect. */
+}
+
+.quiz-display--empty {
+  display: grid;
+  place-items: center;
+}
+
+/* The title block: which question, then the question, then the clock drawn
+   across the whole width under both. */
+.quiz-display__head {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--space-sm), 1.4vh, var(--space-lg));
+}
+
+/* A fifth for the counter, the rest for the question.
+   The counter used to sit on its own line above a centred prompt, which spent
+   a whole band of a screen that never scrolls on two numbers. Side by side,
+   it costs nothing and the question starts at the top. */
+.quiz-display__billing {
+  display: grid;
+  grid-template-columns: 20% 1fr;
+  align-items: center;
+  gap: clamp(var(--space-md), 1.4vw, var(--space-2xl));
+}
+
+/* No item up — an opening or closing stage, which the warmup doesn't have and
+   Match-3 does. The question takes the full width rather than leaving a fifth
+   of the screen indented for a number that isn't there. */
+.quiz-display__billing--wide {
+  grid-template-columns: 1fr;
+}
+
+/* Two lines, centred in their column, with a rule between them and the
+   question. Quiet on purpose: it answers "how much longer is this" and nothing
+   else, and it must not compete with what it sits beside. */
+.quiz-display__counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding-right: clamp(var(--space-md), 1.4vw, var(--space-2xl));
+  border-right: 1px solid var(--divider);
+}
+
+.quiz-display__counter-word {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-xs), 0.9vw, var(--font-size-lg));
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.quiz-display__counter-nums {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-lg), 1.8vw, 34px);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+/* A rule across the zone rather than a cell in the title row. */
+.quiz-display__head .timer--lg {
+  width: 100%;
+}
+
+.quiz-display__main {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(var(--space-md), 2vh, var(--space-2xl));
+  overflow: hidden;
+}
+
+.quiz-display__foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* The dominant element on the screen, and a class rather than a component
+   because a heading with a single prop would earn nobody anything. Every format
+   wants this exact treatment; the ones that don't will say so in their own
+   file.
+
+   Left-aligned, and it takes the width it is given rather than capping itself:
+   it lives in a column that is already four fifths of the zone, and a `max-width`
+   on top of that would ragged a two-line question into three. */
+.quiz-prompt {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-xl), 2.8vw, 54px);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  text-align: left;
+  text-wrap: balance;
+  color: var(--text-primary);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* The sentence under a reveal, when the item has one. Sage is the warm note in
+   this palette and is reserved for what a person actually wrote — which is what
+   `explain` is: a line somebody typed into a content file. */
+.quiz-display__explain {
+  max-width: 44ch;
+  font-size: clamp(var(--font-size-base), 1.3vw, 26px);
+  line-height: 1.35;
+  color: var(--text-soft);
+}
+
+/* ── Option grid ────────────────────────────────────────────────────────────
+   The same letters as the phone, in the same order. The letter is the only
+   thing tying a button in a hand to a line on the screen. */
+
+.option-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: min(100%, 900px);
+  display: grid;
+  gap: clamp(var(--space-sm), 1.2vh, var(--space-lg));
+}
+
+.option-grid__row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: clamp(var(--space-md), 1.4vw, var(--space-2xl));
+  padding: clamp(var(--space-sm), 1.2vh, var(--space-lg)) clamp(var(--space-md), 1.4vw, var(--space-2xl));
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  /* Only opacity moves. A reveal dimming four rows at once is four composited
+     layers, not four relayouts of a screen the whole room is watching. */
+  transition: opacity var(--transition-slow), border-color var(--transition-slow),
+    background var(--transition-slow);
+}
+
+.option-grid__key {
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-lg), 2vw, 40px);
+  line-height: 1;
+  color: var(--accent);
+  min-width: 1.4em;
+}
+
+.option-grid__label {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-lg), 2vw, 40px);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.option-grid__row--correct {
+  border-color: var(--color-success);
+  background: rgba(182, 248, 51, 0.12);
+}
+
+.option-grid__row--correct .option-grid__key,
+.option-grid__row--correct .option-grid__label {
+  color: var(--color-success);
+}
+
+/* Dimmed, not hidden. The room is still checking what it picked. */
+.option-grid__row--dim {
+  opacity: 0.38;
+}
+
+/* ── Media ──────────────────────────────────────────────────────────────────
+   Empty on every item today. The slot exists so the first illustrated round is
+   a content change rather than a refactor. */
+
+.media-strip {
+  display: grid;
+  grid-template-columns: repeat(var(--media-columns, 1), 1fr);
+  gap: var(--space-lg);
+  max-height: 34vh;
+}
+
+.media-strip__frame {
+  height: 100%;
+  max-height: 34vh;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+}
+
+/* ── Scorer roll ────────────────────────────────────────────────────────────
+   Who got it, one face at a time, in the order they got there.
+
+   It replaced a bar chart of the split and a grid of every tile lighting up as
+   people answered. Both were information and neither was a moment — and the
+   room only looks at this screen for about four seconds, which is enough for
+   one thing happening and not enough for two things sitting still.
+
+   A row rather than a wrap: it travels. Fifteen people don't fit across a
+   television, and the component scrolls to the newest face as each lands, so
+   the ones pushed off the left are the ones who already had their moment. */
+
+/* A box along the bottom of the game screen rather than another loose row in
+   the middle of it. The frame is what makes the faces read as a result being
+   posted — a tally the screen is keeping — instead of a fourth thing floating
+   under the question. The zone centres its children, so this claims the same
+   width as the option grid above it and lines up with it. */
+.scorer-roll {
+  position: relative;
+  /* Contains the bubble field, so it cannot paint over the options above. */
+  isolation: isolate;
+  overflow: hidden;
+  width: min(100%, 900px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  /* **A colour, not a tint.** This is the one box on the screen that is about
+     people rather than about a question, and a faint wash of sage over the
+     surface just read as a slightly different panel. At full strength it is a
+     lit zone in a dark room — which is the whole job, since it only appears
+     when there is something to celebrate.
+
+     Palette tokens end to end: sage into yellow-green, both already in the
+     ramp. The text goes navy on top, the same bargain every accent-filled
+     control in the app makes. */
+  background: linear-gradient(155deg, var(--p-sage) 0%, var(--p-lime-2) 100%);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  color: var(--text-alt);
+  /* `.game-zone` centres everything; the box's contents are a header and a row
+     that both start at the left edge. */
+  text-align: left;
+}
+
+/* Above the bubbles, which sit at z-index 0 inside the box. */
+.scorer-roll__header,
+.scorer-roll__track,
+.scorer-roll__nobody {
+  position: relative;
+  z-index: 1;
+}
+
+/* Nobody got it, and the box says so before you have read a word of it: the
+   celebration drains out of the frame and the whole thing turns on you. */
+.scorer-roll--empty {
+  background: var(--bg-surface);
+  border-color: var(--color-error);
+}
+
+/* Inside the box, top left, and navy on the bright field like everything else
+   in here. Held back with opacity rather than a second colour: it labels the
+   faces and the faces are the thing. */
+.scorer-roll__header {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-sm), 1.1vw, var(--font-size-xl));
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-alt);
+  opacity: 0.65;
+}
+
+/* Nothing warm left in here. */
+.scorer-roll--empty .scorer-roll__header {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.scorer-roll__track {
+  width: 100%;
+  display: flex;
+  /* Left, and growing right — the first face to appear is the first person in,
+     and it stays put while the row builds out from it. */
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: clamp(var(--space-md), 1.4vw, var(--space-2xl));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-xs) 0;
+  /* No scrollbar: nobody is reaching for it, the component drives the position,
+     and a grey bar under a row of faces is three metres of visual noise. */
+  scrollbar-width: none;
+}
+
+.scorer-roll__track::-webkit-scrollbar {
+  display: none;
+}
+
+.scorer-roll__tile {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 8rem;
+  /* Mounted one at a time by the component, so this runs once per face as it
+     arrives — the stagger is in the mounting, not in a pile of delays here. */
+  animation: scorerPop 0.34s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes scorerPop {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scorer-roll__tile { animation: none; }
+}
+
+/* Navy on the bright field. Lime was right when the box was dark and is
+   unreadable now — the zone took over the job the colour was doing. */
+.scorer-roll__name {
+  max-width: 100%;
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-sm), 1vw, var(--font-size-lg));
+  font-weight: var(--font-weight-bold);
+  color: var(--text-alt);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A scorer the roster no longer has — they quit between answering and the
+   reveal. They earned the tile, so it keeps its place in the row. */
+.scorer-roll__ghost {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  border: 2px dashed var(--border-color);
+}
+
+/* ── Nobody ─────────────────────────────────────────────────────────────────
+   The display face, coral, and the only thing on this screen that gets to be
+   loud about a failure — because it isn't one. A whole room missing a warmup
+   question is the loudest four seconds of the evening, and the joke only lands
+   if the television commits to it.
+
+   Coral is the error colour and this is deliberately not an error, which is the
+   gag. It is the one place in the app that spends it on a punchline.
+
+   Two animations: it arrives once, then breathes. Only `transform` and
+   `opacity` move — the glow is static, because a flickering text-shadow would
+   repaint a 56px string on every frame while fifteen people watch. */
+.scorer-roll__nobody {
+  /* Centred in the box while the header stays pinned to its corner — the label
+     is furniture, this is the announcement. */
+  align-self: center;
+  text-align: center;
+  padding: var(--space-sm) 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-xl), 3vw, 52px);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  /* Letter-spacing pads the right of the last glyph; the indent pays it back so
+     the line still reads as centred. Same trick as `.game-zone__title`. */
+  text-indent: 0.14em;
+  color: var(--color-error);
+  text-shadow: 0 0 20px rgba(232, 52, 74, 0.5), 0 2px 10px rgba(0, 0, 0, 0.65);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scorer-roll__nobody {
+    animation:
+      nobodyLoom 0.8s cubic-bezier(0.2, 1.3, 0.4, 1) both,
+      nobodyDread 2.4s ease-in-out 0.8s infinite;
+  }
+}
+
+/* Rushes the room, overshoots, drops out once, comes back. The stutter at 70%
+   is the whole character of it — a clean ease-in would read as a notification. */
+@keyframes nobodyLoom {
+  0%   { opacity: 0; transform: scale(0.55); }
+  55%  { opacity: 1; transform: scale(1.12); }
+  70%  { opacity: 0.35; transform: scale(1.08); }
+  85%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* And then it will not leave. A slow lean either way, under a degree, which is
+   enough to look alive and not enough to look broken. */
+@keyframes nobodyDread {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.86; }
+  25%      { transform: scale(1.03) rotate(-0.7deg); }
+  50%      { transform: scale(1.02) rotate(0deg); opacity: 1; }
+  75%      { transform: scale(1.03) rotate(0.7deg); }
+}
+
+/* ── "12 / 15 locked in" ────────────────────────────────────────────────────
+   Both numbers come off the frame. `expected` is the server's own count and the
+   exact number its auto-lock fires on — filtering the roster for `connected`
+   here would write that rule down twice, and the two would drift visibly. */
+
+.locked-in {
+  color: var(--text-muted);
+  font-family: var(--font-accent);
+}
+
+.locked-in__count {
+  color: var(--accent);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.locked-in__of {
+  color: var(--text-muted);
+}
+
+.locked-in--lg {
+  font-size: clamp(var(--font-size-lg), 1.6vw, 32px);
+}
+
+.locked-in--sm {
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================================
+   The phone
+   ============================================================
+   A gamepad. The buttons own the bottom two thirds, because that is the part of
+   a phone a thumb reaches without the hand moving. */
+
+.quiz-player {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.quiz-player--waiting {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Which question, and how long is left. Centred and nothing else: every other
+   thing a phone could say during a round — the tally, the verdict, the answer —
+   is already being said three metres away, larger, to everybody at once. */
+.quiz-player__head {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  text-align: center;
+}
+
+.quiz-player__counter {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ── The buttons ────────────────────────────────────────────────────────────
+   2–4 rows sharing the thumb zone. The row count comes from the item, clamped
+   to the kit's own 2–4, so two options are two tall targets rather than two
+   slabs and two empty rows.
+
+   **Slim, with a real gutter between them** — a miss here is not a typo, since
+   there is no way to change an answer once it is in.
+
+   The rows are content-sized and the group is centred, which is what makes the
+   gap mean what it says. `1fr` rows divide the whole strip and then centre a
+   slim button inside each one, so the visible space between two buttons is the
+   gap *plus* whatever is left over in both rows — on a tall phone that came out
+   at roughly four times the number written here. */
+
+.options {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: repeat(var(--option-rows, 3), auto);
+  align-content: center;
+  gap: var(--space-lg);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  /* A floor, not a ceiling: the button is as tall as its own label, and a label
+     that wraps to two lines grows it rather than being clipped by it. */
+  min-height: 3.5rem;
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  /* No hover state: it sticks on touch devices and leaves a button looking
+     pressed for the rest of the evening. */
+  transition: transform 0.09s ease-out, opacity var(--transition-fast),
+    border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.option:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.option__key {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  color: var(--accent);
+}
+
+.option__label {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+/* The global `button:disabled` rule dims these already. What matters is that a
+   dead button still reads as the option it was — the question is on the
+   television and this is the only place its letters are in reach. */
+
+/* Tapped, unacknowledged. It claims nothing: the button is held down rather
+   than confirmed, which is the honest picture of a message in flight. */
+.option--pending {
+  transform: scale(0.97);
+  border-color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .option--pending {
+    animation: optionPending 1s ease-in-out infinite;
+  }
+}
+
+@keyframes optionPending {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1; }
+}
+
+/* Locked in — confirmed by an ack or echoed back on the frame. `yourChoice`
+   being non-null *is* this state; nothing tracks it separately. */
+.option--chosen {
+  opacity: 1;
+  border-color: var(--accent);
+  background: var(--brand);
+}
+
+.option--chosen .option__key {
+  background: var(--accent);
+  color: var(--text-alt);
+}
+
+/* The reveal, on your own choice alone. There is no `correct` prop to pass,
+   because the correct key never reaches a phone in any form, at any step. */
+.option--correct {
+  border-color: var(--color-success);
+  background: rgba(182, 248, 51, 0.16);
+}
+
+.option--wrong {
+  border-color: var(--color-error);
+  background: rgba(232, 52, 74, 0.12);
+}
+
+.option--wrong .option__key {
+  background: var(--color-error);
+  color: var(--white);
+}
+
+/* ── The footer panel ───────────────────────────────────────────────────────
+   What you have made this game, and the phone's only number.
+
+   It lags the answer on purpose: `yourScore` counts revealed items only,
+   because a submission is marked correct the moment it is recorded and a total
+   that moved when you tapped would be telling you that you were right while the
+   room was still deciding. The number holding still after a tap is the feature.
+
+   It is also the one status surface left. A refusal borrows the label rather
+   than appearing as a line of its own — a sentence arriving from nowhere pushes
+   three buttons down the screen under a thumb that is already moving. */
+
+/* Brand blue behind a lime outline, and lime inside it — the same treatment a
+   locked-in button gets, which is deliberate: this is the other thing on the
+   screen that is *yours*. It reads as a bank rather than as part of the
+   question, and it looks like that all the time rather than only in the second
+   after you win something. */
+.score-panel {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--brand);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  color: var(--accent);
+}
+
+.score-panel__label {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.score-panel__points {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.score-panel__unit {
+  margin-left: 0.35em;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+/* You scored on the item just revealed. The panel is already lit, so the moment
+   is a pulse and a ring rather than a change of colour — the class lands with
+   the reveal frame and leaves with the next item, so it runs once per question
+   won. The ring is static; only the transform animates. */
+.score-panel--scored {
+  box-shadow: 0 0 0 4px rgba(182, 248, 51, 0.22);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .score-panel--scored {
+    animation: scorePanelLit 0.5s ease-out;
+  }
+}
+
+@keyframes scorePanelLit {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* A refusal in the label slot — "missed that one". Amber against the lime is
+   the one thing here that isn't yours to keep. `already_answered` never reaches
+   this: it means locked in, and is not an error. */
+.score-panel--note .score-panel__label {
+  color: var(--color-warning);
+}

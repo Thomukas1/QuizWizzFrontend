@@ -1,6 +1,7 @@
 import { JoinPanel } from './JoinPanel';
+import { NextUp } from './NextUp';
 import { ArmedButton } from '../../primitives/ArmedButton';
-import type { HostCommand } from '../../services/quizwizz';
+import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwizz';
 
 /**
  * **The remote.** Every host command lives here, so the game zone never has a
@@ -28,6 +29,12 @@ interface AdminPanelProps {
   /** Where phones go. Kept on screen all evening — see `JoinPanel`. */
   joinUrl: string;
   code: string | null;
+  // ── Everything below is `<NextUp>`'s, and passed straight through ──────────
+  /** What the transport is pointing at, and the only branch it makes. */
+  phase: Phase | null;
+  game: GameRun | null;
+  upNext: GameRef | null;
+  gameCount: number;
 }
 
 export function AdminPanel({
@@ -37,6 +44,10 @@ export function AdminPanel({
   ended,
   joinUrl,
   code,
+  phase,
+  game,
+  upNext,
+  gameCount,
 }: AdminPanelProps) {
   return (
     <div className="admin-panel">
@@ -69,34 +80,20 @@ export function AdminPanel({
         <JoinPanel joinUrl={joinUrl} code={code} />
       </div>
 
+      {/* The transport, and the whole of it: what is coming, and the two ways to
+          reach it. The playlist picker that used to sit in the band above was
+          answering the same question this does — what Space will do next — and
+          two controls answering one question is how you end up with neither of
+          them saying it. */}
       <div className="admin-panel__remote">
-        {/*
-          The escape hatch, and the reason an unclaimed `next` during GAME can
-          safely be refused: `skipGame` force-ends the running game with no
-          awards without consulting the module, so a format that has hung — or
-          one nobody wants to sit through — can't hold the evening hostage.
-
-          Armed like the wipe button, because it silently costs everyone the
-          points they were playing for.
-        */}
-        <ArmedButton
-          className="admin-btn admin-btn--ghost"
-          armedClassName="admin-btn--armed"
-          disabled={!connected}
-          title="End the running game with no points awarded"
-          label="Skip ↦"
-          confirmLabel="Tap to skip"
-          onConfirm={() => command('skipGame')}
+        <NextUp
+          phase={phase}
+          game={game}
+          upNext={upNext}
+          gameCount={gameCount}
+          command={command}
+          connected={connected}
         />
-
-        <button
-          type="button"
-          className="admin-btn admin-btn--next"
-          disabled={!connected}
-          onClick={() => command('next')}
-        >
-          Next →
-        </button>
       </div>
     </div>
   );

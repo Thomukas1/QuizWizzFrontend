@@ -39,10 +39,43 @@ export type Role = 'host' | 'player';
  */
 export type Phase = 'LOBBY' | 'GAME' | 'RESULTS' | 'FINAL';
 
-/** A deadline is two absolute server timestamps, shipped once. */
+/**
+ * **What kind of clock is running** — the one thing a countdown cannot work out
+ * from two timestamps.
+ *
+ * Every game arms the same `Deadline`, but a 1.5-second lead-in, a 30-second
+ * question and a 2-second last-chance tail are three different things on screen,
+ * and without this the client can only guess by switching on the running game's
+ * own step ids — which means every game reimplements the guess and no single
+ * timer component is possible.
+ *
+ * Deliberately about **what the clock is for** rather than what the game is:
+ * `live` is a quiz question, sixty seconds of popping balloons, and a buzzer
+ * window, because all three want the same big bar.
+ *
+ * There is no label here on purpose. "Get ready" is copy, and copy belongs to
+ * the client that has the fonts, the room to put it and the language to say it
+ * in — the server saying which of four things is happening is the whole of what
+ * only the server knows.
+ */
+export type TimerKind =
+    /** A lead-in. Inputs are dead and nobody should be racing it. */
+    | 'prepare'
+    /** The main event. Inputs are live and the bar is the biggest thing on screen. */
+    | 'live'
+    /** The tail after an auto-lock. Short and urgent: everyone else is already in. */
+    | 'lastChance'
+    /** A beat the room is not meant to watch — a drumroll, a lock pause. Usually hidden. */
+    | 'beat';
+
+/**
+ * A deadline is two absolute server timestamps and what they are for, shipped
+ * once. Clients count down locally against it; nothing ticks over the wire.
+ */
 export interface Deadline {
     startedAt: number;
     endsAt: number;
+    kind: TimerKind;
 }
 
 /**
@@ -222,6 +255,14 @@ export type QuizWizzReason =
     | 'wrong_phase'
     | 'stale_run'
     | 'too_late'
+    /**
+     * You already answered this one. **A refusal the phone should not show as an
+     * error** — it means "locked in", and it is the expected reply to a
+     * double-tap or a resend after a reconnect. Distinct from `too_late`, which
+     * is a chance missed, and from `not_allowed`, which is buttons that were
+     * never live: three different sentences for a phone to say.
+     */
+    | 'already_answered'
     | 'not_allowed';
 
 /**

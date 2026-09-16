@@ -21,9 +21,12 @@ below points at those through semantic roles — reach for the role, never a raw
   always means something.
 - **Lime-2** (`accent-dim`) — lime's quieter cousin, for emphasis *inside* a
   sentence. A highlighted word or two, never a whole line.
-- **Sage** (`soft`) — the human hand. Reserved for what a real person actually
-  made: lyrics, author credits. The one warm note in a cool palette — that warmth
-  is the point, so don't spend it elsewhere.
+- **Sage** (`soft`) — the human hand. The one warm note in a cool palette, and
+  reserved for the places where a real person is present rather than a rule: a
+  sentence somebody wrote into a content file, and the celebration zone that
+  fills with the people who just got a question right. It used to mean lyrics
+  and author credits, which this app doesn't have. That warmth is the point, so
+  don't spend it on anything a machine decided.
 - **Steel** (`muted`) — the whisper. Secondary text, captions, and *off* states
   (an inactive tab, a disabled button).
 - **Coral & Amber** — meaning, not decoration. Coral is error; amber is a

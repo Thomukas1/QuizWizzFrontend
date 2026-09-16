@@ -41,12 +41,64 @@
   padding: var(--space-md) 0;
 }
 
+/* The transport band. One control lives here now and owns its own layout, so
+   this is a rule about the seam rather than about the buttons: the line above
+   it is what separates the thing you press all evening from the things you
+   press once. */
 .admin-panel__remote {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-sm);
   padding-top: var(--space-md);
   border-top: 1px solid var(--divider);
+}
+
+/* ============================================================
+   Next up — what the key will do
+   ============================================================
+   The destination, then the verb. It replaced a playlist picker in the band
+   above and an unlabelled Next button down here, both of which were answering
+   the same question — what happens when I press Space — in two places that
+   could disagree.
+
+   Named rather than counted: "Next up — Warmup" is what the host reads out to
+   the room, and "1 loaded" never was. */
+
+.next-up {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.next-up__billing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+/* The one line on this panel that is read rather than clicked, so it gets the
+   weight of a heading. Ellipsised rather than wrapped: a long title pushing the
+   buttons down would move the control you press all evening. */
+.next-up__title {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-lg), 1.3vw, var(--font-size-2xl));
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Skip is there during a game and gone the rest of the time — the server
+   refuses it outside `GAME` — so the row is a flex rather than a fixed pair of
+   columns, and Go takes the full width when it is the only thing in it. */
+.next-up__actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.next-up__actions > * {
+  flex: 1;
+  min-width: 0;
 }
 
 .admin-btn {

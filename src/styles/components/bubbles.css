@@ -1,0 +1,74 @@
+/* ============================================================
+   Bubbles — a celebratory field for a box that has good news in it
+   ============================================================
+   Two elements per bubble, as with the confetti and the emoji stream: the outer
+   rises at a constant rate, the inner sways and breathes on its own period. One
+   element doing both makes fourteen bubbles move as a single sheet, which reads
+   as a screensaver rather than as water.
+
+   `transform` and `opacity` only. This sits under a row of faces on a screen
+   fifteen people are watching, next to an emoji field already doing the same
+   thing — nothing here may cost a layout. */
+
+.bubbles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Behind the header and the faces. Celebration, not an obstruction. */
+  z-index: 0;
+  /* How far a bubble travels before it is gone. Comfortably past the top of the
+     strip at any of its heights, so none of them stall mid-box. */
+  --bubble-travel: 190px;
+}
+
+.bubbles__bubble {
+  position: absolute;
+  bottom: 0;
+  display: block;
+  will-change: transform;
+  animation: bubbleRise var(--rise) linear infinite;
+}
+
+/* **Barely there, on purpose.** These are not objects floating in front of a
+   panel — they are the panel not holding still. A bubble with a rim and a
+   specular highlight reads as a thing you are meant to look at, which pulls the
+   eye off the faces; a soft lighter patch of the same field just makes the
+   colour move.
+
+   White at low alpha rather than a colour of their own, so they lighten
+   whatever the gradient happens to be underneath them and stay low-contrast at
+   both ends of it. No border, and the edge fades out entirely. */
+.bubbles__skin {
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  border-radius: var(--radius-full);
+  background: radial-gradient(
+    circle at 38% 32%,
+    rgba(255, 255, 255, 0.26),
+    rgba(255, 255, 255, 0.12) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  will-change: transform;
+  animation: bubbleSway var(--sway) ease-in-out infinite alternate;
+}
+
+/* In at the bottom, out at the top, and never a hard edge at either — a bubble
+   that pops into existence on a boundary reads as a rendering fault. */
+@keyframes bubbleRise {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  14%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { transform: translate3d(var(--drift), calc(-1 * var(--bubble-travel)), 0); opacity: 0; }
+}
+
+@keyframes bubbleSway {
+  from { transform: translateX(-5px) scale(0.9); }
+  to   { transform: translateX(5px) scale(1.08); }
+}
+
+/* Celebration is not worth making somebody ill. The faces say the same thing. */
+@media (prefers-reduced-motion: reduce) {
+  .bubbles { display: none; }
+}

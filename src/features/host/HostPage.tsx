@@ -154,6 +154,10 @@ export default function HostPage() {
           ended={ended}
           joinUrl={joinUrl}
           code={state.code}
+          phase={state.phase}
+          game={state.game}
+          upNext={state.upNext}
+          gameCount={state.gameCount}
         />
       </aside>
 

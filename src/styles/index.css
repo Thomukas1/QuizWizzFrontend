@@ -18,8 +18,10 @@
 @import './components/avatar.css';
 @import './components/room-code.css';
 @import './components/dots.css';
+@import './components/bubbles.css';
 @import './components/emoji-stream.css';
 @import './components/leaderboard.css';
+@import './components/timer.css';
 
 /* QuizWizz — host. The television: three metres away, never scrolls. */
 @import './components/host-stage.css';
@@ -37,6 +39,10 @@
 @import './components/reaction-bar.css';
 @import './components/join-page.css';
 @import './components/avatar-slider.css';
+
+/* QuizWizz — games. The round formats: one stylesheet for the shared quiz kit,
+   and one per format that needs a screen the kit doesn't already draw. */
+@import './components/quiz-kit.css';
 
 /* Tailwind CSS */
 @tailwind base;

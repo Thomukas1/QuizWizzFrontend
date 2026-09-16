@@ -1,0 +1,151 @@
+/* ============================================================
+   Timer — the clock, on both screens
+   ============================================================
+   One component, four looks, and the look is chosen by the deadline's `kind`
+   rather than by whatever step happens to be running. That is the whole reason
+   this sits at the root of `components/`: a quiz question and sixty seconds of
+   popping balloons are the same `live` clock, and neither format has an opinion
+   about how a bar is drawn.
+
+   `beat` has no rules here at all — the component renders nothing for it, so a
+   drumroll never flashes a one-second countdown nobody can act on.
+
+   Only `transform` and `opacity` move. This runs while the whole room is
+   watching, next to an emoji field and a table of avatars, and a bar animating
+   `width` would relayout the zone a hundred times a second. */
+
+.timer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: center;
+  /* Its own colour, so each kind sets one token instead of four rules. */
+  --timer-colour: var(--accent);
+  color: var(--timer-colour);
+}
+
+.timer__readout {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.timer__label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+/* Tabular figures: without them the bar jitters sideways as the digits change
+   width, which on a television reads as the clock stuttering. */
+.timer__seconds {
+  font-variant-numeric: tabular-nums;
+}
+
+.timer__track {
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+}
+
+/* Anchored left and scaled, never resized. The transition matches the hook's
+   100ms tick, so the bar glides between samples instead of stepping — and when
+   the auto-lock truncates a live clock the component re-keys, the element is
+   replaced, and this transition has nothing to animate from. That snap is the
+   point: gliding would read as time being lost rather than as everyone else
+   already being in. */
+.timer__fill {
+  height: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--timer-fraction, 0));
+  background: var(--timer-colour);
+  transition: transform 0.1s linear;
+}
+
+/* ── The four kinds ─────────────────────────────────────────────────────────
+   `beat` is absent on purpose and always will be: there is no rule to write for
+   something that never reaches the DOM. */
+
+/* A lead-in. Quiet, and deliberately not urgent — nothing is being asked yet
+   and a bar that looked like a race would have people jabbing at dead buttons. */
+.timer--prepare {
+  --timer-colour: var(--text-soft);
+  opacity: 0.85;
+}
+
+.timer--live {
+  --timer-colour: var(--accent);
+}
+
+/* The tail after an auto-lock. Amber is the warning token and this is exactly
+   what it is for: everyone else is already in and there are two seconds left. */
+.timer--lastChance {
+  --timer-colour: var(--color-warning);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .timer--lastChance {
+    animation: timerUrgent 0.7s ease-in-out infinite;
+  }
+}
+
+@keyframes timerUrgent {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ── Three metres away ──────────────────────────────────────────────────── */
+
+.timer--lg {
+  width: min(100%, 720px);
+}
+
+.timer--lg .timer__readout {
+  font-size: clamp(var(--font-size-2xl), 4vw, 72px);
+}
+
+.timer--lg .timer__label {
+  font-size: clamp(var(--font-size-lg), 1.6vw, 30px);
+}
+
+.timer--lg .timer__track {
+  height: clamp(8px, 1vh, 14px);
+}
+
+/* ── In a hand ──────────────────────────────────────────────────────────────
+   A strip rather than a headline, and one line rather than two. The phone's job
+   during a question is the buttons; the clock is a reference, and a 72px
+   numeral over three tap targets would be the loudest thing on a screen nobody
+   should be reading. Every vertical pixel it gives back goes to the gaps
+   between the buttons, which is where it is worth more. */
+
+.timer--sm {
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.timer--sm .timer__readout {
+  flex-shrink: 0;
+  font-size: var(--font-size-lg);
+}
+
+/* The bar takes the rest of the line. In the column layout the track is already
+   full width; here it has to be told to claim what the digits don't. */
+.timer--sm .timer__track {
+  flex: 1;
+  min-width: 0;
+}
+
+.timer--sm .timer__label {
+  font-size: var(--font-size-xs);
+}
+
+.timer--sm .timer__track {
+  height: 4px;
+}

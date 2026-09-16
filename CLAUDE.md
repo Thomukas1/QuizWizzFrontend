@@ -4,6 +4,7 @@ A party quiz game. One television and everyone's phone, in the same room.
 
 `FRONTEND-ARCHITECTURE.md` is the wire contract and `FRONTEND-DESIGN.md` is the two views —
 **read the architecture one first**; this file is the orientation map for working in the code.
+`FRONTEND-QUIZZES.md` is the build spec for the quiz rounds, and assumes both.
 
 ## The shape of it
 
@@ -132,8 +133,9 @@ protects it.
 last `totals` we saw, which produced no movement arrows at all for a phone that reconnected
 mid-animation.
 
-⚠️ `protocol.ts` here is **ahead of the server** — see `PHASE-REDESIGN.md`, which is the spec the
-server has to apply. Until it does, the client will not talk to it, and the failure is silence.
+The server has since applied the phase redesign, so this half is no longer ahead of it — the copy
+now runs **server → client**, as `services/quizwizz/` says. Re-copy `protocol.ts` whenever the
+server's changes; a drifted copy is the one bug that produces silence rather than an error.
 
 ## Adding a game
 

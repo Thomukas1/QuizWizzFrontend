@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
 import type { Avatar, Deadline, PublicPlayer } from '../services/quizwizz';
 
@@ -66,7 +67,12 @@ export interface GameComponents {
  * },
  * ```
  */
-export const GAMES: Record<string, GameComponents> = {};
+export const GAMES: Record<string, GameComponents> = {
+  'quiz-warmup': {
+    Display: lazy(() => import('./quiz-warmup/Display')),
+    Player: lazy(() => import('./quiz-warmup/Player')),
+  },
+};
 
 /**
  * Look a game up. **Returns undefined rather than throwing** — an unknown

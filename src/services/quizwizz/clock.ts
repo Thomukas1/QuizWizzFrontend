@@ -37,6 +37,26 @@ export const fractionLeft = (deadline: Deadline | null): number => {
 };
 
 /**
+ * The digit a television reads out. **Ceiling, not floor** — a clock with 200ms
+ * left still shows `1`, and reaches `0` only when it is genuinely over.
+ * Flooring shows `0` for the whole final second, which is a second of the room
+ * believing it is too late while the server is still accepting answers.
+ */
+export const secondsLeft = (deadline: Deadline | null): number =>
+  Math.ceil(remaining(deadline) / 1000);
+
+/**
+ * Whether this clock is one the room is meant to be watching.
+ *
+ * `beat` is the drumroll between locking a question and revealing it: a real
+ * deadline the server is counting, and nothing anybody can act on. A bar that
+ * flashed through one second of it would read as a countdown that had broken,
+ * so the honest render of a beat is no clock at all.
+ */
+export const isVisible = (deadline: Deadline | null): boolean =>
+  !!deadline && deadline.kind !== 'beat';
+
+/**
  * Seed a rough offset from `session:snapshot`'s `tServer`.
  *
  * One-way, so it carries the whole network latency as error — but it lands

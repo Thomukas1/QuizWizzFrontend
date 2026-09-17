@@ -28,6 +28,19 @@ import type { PublicPlayer, ScorecardRow } from '../../services/quizwizz';
  * the next player past** — two 2nds and no 3rd — because this is a table of what
  * happened rather than a podium that has to seat exactly three people. Nothing
  * here renumbers it.
+ *
+ * ## A tie says how wide it is
+ *
+ * Four people on the same score used to be four rows all reading `3rd`, and the
+ * room read that as four separate third places — the obvious question being what
+ * happened to 4th, 5th and 6th. They are *in* the tie: the server shares the
+ * place across it and pushes the next player past all of them, so those rows are
+ * jointly 3rd through 6th and the next one down is 7th.
+ *
+ * So a shared place is drawn as the span it occupies, `3-6th`. That is read off
+ * the server's own numbering rather than worked out — the group's size is how
+ * far the pushed-past row was pushed — and it is the same fact the table always
+ * carried, printed instead of implied.
  */
 
 /** Decoration, not protocol — the wire carries the number, so this lives here. */
@@ -38,9 +51,12 @@ function ordinal(n: number): string {
 }
 
 /**
- * Past this many rows the table runs two columns instead of scrolling. A table
- * the room takes in at a glance beats a list that reads itself past the name
- * somebody is looking for, and nobody is waiting long enough to scroll.
+ * Past this many rows the rows go compact — smaller faces, tighter padding, so
+ * more of the table is above the fold before it has to be scrolled.
+ *
+ * It used to switch to two columns instead, which is the thing that made a
+ * scorecard of twelve read as two unrelated tables and put 7th place at the top
+ * of the screen beside 1st. One column is one ranking.
  */
 const DENSE_AT = 8;
 
@@ -55,18 +71,33 @@ export function Scorecard({ rows, players }: ScorecardProps) {
   const byId = new Map(players.map(player => [player.id, player]));
   const dense = rows.length > DENSE_AT;
 
+  /**
+   * How many rows share each place. A place held by one player is the ordinary
+   * case and prints as it always did; anything above one is a tie, and its size
+   * is exactly how many places it swallowed.
+   */
+  const sharing = new Map<number, number>();
+  for (const row of rows) sharing.set(row.place, (sharing.get(row.place) ?? 0) + 1);
+
   return (
     <ol className={`scorecard${dense ? ' scorecard--dense' : ''}`}>
       {rows.map(row => {
         const player = byId.get(row.playerId);
         const paid = row.delta !== 0;
 
+        // `3-6th` when four people scored the same, `3rd` when one did. The
+        // upper bound is the last place the tie occupies, which is the place it
+        // starts at plus everyone else in it.
+        const shared = sharing.get(row.place) ?? 1;
+        const place =
+          shared > 1 ? `${row.place}-${ordinal(row.place + shared - 1)}` : ordinal(row.place);
+
         return (
           <li
             key={row.playerId}
             className={`scorecard__row${paid ? '' : ' scorecard__row--blank'}`}
           >
-            <span className="scorecard__place">{ordinal(row.place)}</span>
+            <span className="scorecard__place">{place}</span>
 
             {player ? (
               <Avatar

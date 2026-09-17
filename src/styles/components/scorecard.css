@@ -18,11 +18,20 @@
    The name takes all the slack, because it is the only cell whose width the
    server doesn't control. */
 
+/* **A column down the middle, about half the zone.** It was capped at 900px,
+   which on a television is very nearly the whole stage — and a four-cell row
+   stretched that wide puts the place at one edge and what it paid at the other,
+   with a runway of empty surface between them that the eye has to cross on every
+   line. Narrow is what makes it read as one list.
+
+   Sized in `vw` rather than pixels because it is furniture on a screen whose
+   size is unknown, with a floor for a small window and a ceiling so it stops
+   growing on a very large one. */
 .scorecard {
   list-style: none;
   margin: 0 auto;
   padding: 0;
-  width: min(100%, 900px);
+  width: min(100%, clamp(400px, 30vw, 820px));
   max-height: 100%;
   min-height: 0;
   overflow-y: auto;
@@ -47,17 +56,21 @@
 
 /* Within this game, and **not** the evening's rank: ties share a place and push
    the next player past, so a column of these can read 1st, 2nd, 2nd, 4th. That
-   is the table being honest rather than tidy — see `byPlace` in standings.ts. */
+   is the table being honest rather than tidy — see `byPlace` in standings.ts.
+
+   A tie prints the span it occupies rather than its first place four times over,
+   so the widest label here is `10-14th` rather than `10th`. Figures are tabular
+   so the column lines up down every row instead of shimmering as the numbers
+   change. */
 .scorecard__place {
   font-family: var(--font-accent);
   font-weight: var(--font-weight-bold);
   color: var(--text-muted);
-  /* "10th" is the widest realistic label; figures are tabular so the column
-     lines up down every row instead of shimmering as the numbers change. */
-  min-width: 3.5ch;
+  min-width: 7ch;
   text-align: center;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 /* A player the roster no longer has. The row keeps its place; only the face is
@@ -123,16 +136,18 @@
 }
 
 /* ── Many players ───────────────────────────────────────────────────────────
-   Enough rows that one column would scroll, so run two. Between games nobody
-   is waiting long enough to scroll a television, and a list that reads itself
-   scrolls past the name somebody is looking for. */
+   **One column, always, and it scrolls.** This used to run two columns past
+   eight rows to avoid a scrollbar, and the cure was worse: a ranking read down
+   one side and then down the other puts 7th at the top of the screen level with
+   1st, and the room reads two tables instead of one order.
+
+   So a long card stays a single ranking and goes compact instead — smaller
+   faces, tighter rows — which buys back most of the height the second column
+   was for. `.scorecard` already scrolls; what is below the fold is the tail of
+   the table, which is the right thing to have to reach for. */
 
 .scorecard--dense {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: start;
-  gap: var(--space-sm) var(--space-lg);
-  width: min(100%, 1400px);
+  gap: var(--space-xs);
   font-size: clamp(var(--font-size-sm), 1.1vw, 22px);
 }
 

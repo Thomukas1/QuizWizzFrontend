@@ -50,7 +50,16 @@ import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwi
  */
 const PLAYLIST: { gameId: string; title: string; config?: Record<string, unknown> }[] = [
   // { gameId: 'quiz-warmup', title: 'Warmup' },
-  { gameId: 'quiz-speedrun', title: 'Speedrun' },
+  // { gameId: 'quiz-speedrun', title: 'Speedrun' },
+  /**
+   * The content id is the server's own default, named here because it is this
+   * entry's handle: an evening's three Match-3 rounds are three of these rows
+   * with three `content` files, and a run-through that doesn't want a hundred
+   * seconds of barrage swaps in a short one **here** rather than fighting
+   * `FAST_CONFIG` — an entry's own config goes over the dev override, so this is
+   * the key that always wins.
+   */
+  { gameId: 'quiz-match3', title: 'Match-3', config: { content: 'match3-01' } },
 ];
 
 /**
@@ -70,6 +79,13 @@ const FAST_CONFIG: Record<string, unknown> = {
   itemDurationMs: 5_000,
   lastChanceBufferMs: 1_000,
   lockPauseMs: 300,
+  /**
+   * Match-3's running start, which nothing else has. Worth knowing when you
+   * reach for `?fast` on this one: `itemDurationMs` is per item and Match-3 has
+   * twenty of them, so the flag still leaves a hundred seconds of barrage to sit
+   * through. A short content file in the playlist row above is the real lever.
+   */
+  countdownMs: 1_000,
 };
 
 const configForPlaylist = (): Record<string, unknown> =>

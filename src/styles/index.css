@@ -45,6 +45,7 @@
    and one per format that needs a screen the kit doesn't already draw. */
 @import './components/quiz-kit.css';
 @import './components/speedrun.css';
+@import './components/match3.css';
 
 /* Tailwind CSS */
 @tailwind base;

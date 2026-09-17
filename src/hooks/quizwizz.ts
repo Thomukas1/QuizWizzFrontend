@@ -11,3 +11,4 @@ export { useCountdown } from './quizwizz/useCountdown';
 export { useHostCommand } from './quizwizz/useHostCommand';
 export { useSpaceToAdvance } from './quizwizz/useSpaceToAdvance';
 export { usePlayerActions } from './quizwizz/usePlayerActions';
+export { useBots } from './quizwizz/useBots';

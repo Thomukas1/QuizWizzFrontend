@@ -15,72 +15,15 @@
    or a shadow animating here drops frames in front of everybody. */
 
 /* ── The television's reveal layout ─────────────────────────────────────────
-   Replaces the kit's three bands: a recap strip, then the ring taking the rest.
-   The question is gone, which is the point — the answer is a line of text now
-   and the people are the screen. */
+   **One row, and the ring is in the middle of it.** The kit's three bands are
+   collapsed away: no recap strip, no question, no footer. The room has just
+   watched the option turn green, and a line of text over fifteen exploding
+   faces is two things asking to be read at once — the faces win, because they
+   are the ones that have to carry from three metres. */
 
 .quiz-display--ring {
-  grid-template-rows: auto minmax(0, 1fr);
-}
-
-/* What was being asked, and what it turned out to be. Small and still there:
-   ten seconds of explosions is long enough for a room to lose the question, and
-   the host should not have to read it back out. */
-.speedrun-recap {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--space-sm) var(--space-lg);
-  font-size: clamp(var(--font-size-base), 1.4vw, 26px);
-}
-
-.speedrun-recap__counter {
-  font-family: var(--font-accent);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.speedrun-recap__prompt {
-  color: var(--text-muted);
-  max-width: 55%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* The correct option, in the colour the option grid just turned it. */
-.speedrun-recap__answer {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-sm);
-  font-family: var(--font-accent);
-  font-weight: var(--font-weight-bold);
-  color: var(--accent);
-}
-
-.speedrun-recap__key {
-  display: inline-grid;
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
-  min-width: 1.6em;
-  padding: 0.05em 0.3em;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--text-alt);
-  font-size: 0.85em;
-}
-
-/* The `answer` step's footer. The room has the correct option and not one word
-   about who got it — that gap is the crowd step's whole job, and filling it a
-   step early spends the format's best beat. */
-.speedrun-hold {
-  text-align: center;
-  font-family: var(--font-accent);
-  font-size: clamp(var(--font-size-lg), 1.8vw, 34px);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-soft);
-  letter-spacing: 0.02em;
 }
 
 /* ── The ring ───────────────────────────────────────────────────────────────
@@ -90,17 +33,19 @@
    shrinks as the crowd grows. */
 
 /* **One variable sizes the whole thing**, and it is the constraint rather than
-   the content: the zone is 60% of a 16:9 screen with padding, so the field can
-   have ~52vw and ~58vh and must fit in both. The radius is a fraction of it,
-   which leaves 28% of the field as the margin the faces and their names sit in
-   — so the ring cannot grow past its band whatever the crowd does, and a name
-   is never clipped off the edge of a television.
+   the content: the zone is 60% of a 16:9 screen with padding, and the ring is
+   now the only thing in it, so the field takes ~54vw and ~76vh and must fit in
+   both. (It was 52vw/58vh when a recap strip sat above it — the strip is gone
+   and the height it was holding belongs to the faces.) The radius is a fraction
+   of the field, which leaves 28% of it as the margin the faces and their names
+   sit in — so the ring cannot grow past its band whatever the crowd does, and a
+   name is never clipped off the edge of a television.
 
    Sizing the box from the radius instead (`ring * 2 + seat`) is the version
    that overflows: `--seat` is a pixel value off the component and the two
    units stop agreeing the moment somebody plays this on a different screen. */
 .crowd-circle {
-  --field: min(58vh, 52vw);
+  --field: min(76vh, 54vw);
   --ring: calc(var(--field) * 0.36);
   position: relative;
   width: var(--field);
@@ -122,7 +67,10 @@
    that nothing did. */
 .crowd-circle__nobody {
   font-family: var(--font-display);
-  font-size: clamp(var(--font-size-2xl), 5vw, 90px);
+  /* Sized to fit on one line inside the 60% zone, not to fill it. The display
+     face plus the tracking below runs wide, and at 5vw a three-word line was
+     going off both edges of the television. */
+  font-size: clamp(var(--font-size-xl), 3vw, 54px);
   color: var(--color-error);
   letter-spacing: 0.06em;
   text-align: center;
@@ -156,21 +104,9 @@
   color: var(--text-muted);
 }
 
-/* The place going up, once the cull has finished and the payouts can be shown.
-   The biggest thing on the screen for the beat it is on it. */
-.crowd-circle__place-up {
-  font-family: var(--font-display);
-  font-size: clamp(var(--font-size-3xl), 7vw, 150px);
-  line-height: 1;
-  color: var(--accent);
-  animation: place-land 420ms cubic-bezier(0.2, 1.2, 0.4, 1) both;
-}
-
-@keyframes place-land {
-  from { transform: scale(0.55); opacity: 0; }
-  to   { transform: scale(1);    opacity: 1; }
-}
-
+/* Seats are invisible until the component says they have landed — the crowd
+   step deals them one at a time, 300ms apart, and in a scrambled order so the
+   ring fills from everywhere rather than sweeping round like a clock hand. */
 .crowd-circle__seat {
   position: absolute;
   top: 50%;
@@ -185,13 +121,29 @@
     rotate(calc(var(--i) * 360deg / var(--n)))
     translateY(calc(var(--ring) * -1))
     rotate(calc(var(--i) * -360deg / var(--n)));
-  /* Landing the ring: every face arrives at once, which is the crowd step. */
-  animation: seat-arrive 320ms ease-out both;
+  opacity: 0;
+}
+
+/* Opacity on the seat and scale on the face inside it, because the seat's own
+   transform is its place in the ring and popping it would move it. */
+.crowd-circle__seat--in {
+  opacity: 1;
+  animation: seat-arrive 240ms ease-out both;
+}
+
+.crowd-circle__seat--in .crowd-circle__face {
+  animation: face-arrive 340ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 
 @keyframes seat-arrive {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+@keyframes face-arrive {
+  from { transform: scale(0.3); }
+  60%  { transform: scale(1.12); }
+  to   { transform: scale(1); }
 }
 
 .crowd-circle__face {
@@ -457,12 +409,20 @@
 
 @media (prefers-reduced-motion: reduce) {
   .crowd-circle__seat,
-  .crowd-circle__place-up,
   .crowd-circle__result,
   .crowd-circle__points,
   .speedrun-verdict,
+  .crowd-circle__seat--in .crowd-circle__face,
   .crowd-circle__seat--won .crowd-circle__face {
     animation: none;
+  }
+
+  /* The component deals every seat at once under reduced motion, so `--in` is
+     on all of them and the opacity here is what makes them visible without the
+     fade doing it. */
+  .crowd-circle__seat--in {
+    animation: none;
+    opacity: 1;
   }
 
   .crowd-circle__seat--gone {

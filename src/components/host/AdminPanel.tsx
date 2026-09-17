@@ -1,3 +1,4 @@
+import { BotControl } from './BotControl';
 import { JoinPanel } from './JoinPanel';
 import { NextUp } from './NextUp';
 import { ArmedButton } from '../../primitives/ArmedButton';
@@ -51,6 +52,11 @@ export function AdminPanel({
 }: AdminPanelProps) {
   return (
     <div className="admin-panel">
+      {/* The harness, above the band the real controls live in and rendered only
+          in development — it is scaffolding, not a feature, and it should read
+          that way from across the room. `<BotControl>` returns null in a build. */}
+      <BotControl connected={connected} />
+
       <div className="admin-panel__actions">
         {/* Once the session is over there is nothing to protect, so the arming
             step goes and the button becomes the plain way out — the same slot,

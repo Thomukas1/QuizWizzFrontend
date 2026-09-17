@@ -19,12 +19,17 @@ import { QuizCounts, QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../qui
  * locked  ~1s    buttons dead, drumroll
  * answer  host   the correct option, and the bars
  * crowd   host   everyone who got it right, all at once
- * podium  host   one step per paying place, counting down to 1st
+ * podium  host   every paying place at once, with its time
  * ```
  *
- * `podium` is the same id `winners` times over — the place being unveiled is
- * `reveal.place`, not the step name, because how many places pay is config and a
- * step id cannot be. A place nobody won is skipped and never reaches a frame.
+ * **One podium step, not one per place.** It used to be `winners` steps counting
+ * down to 1st, and the suspense it was buying did not exist: every place pays the
+ * same `pointsEach`, so "who came 2nd" is a fun thing to read off your own face
+ * and not a thing worth three host presses and eight seconds. The places and the
+ * times all land together and the room reads them at its own speed.
+ *
+ * The step is skipped entirely when nobody was right, which is why the reveal can
+ * end on the crowd saying "Nobody".
  */
 export type SpeedrunStep = 'intro' | 'open' | 'locked' | 'answer' | 'crowd' | 'podium';
 
@@ -52,11 +57,16 @@ export interface SpeedrunReveal {
      * to the podium throws the whole thing away.
      */
     crowd: string[] | null;
-    /** The places unveiled so far, worst first. Empty until the first `podium` step. */
+    /**
+     * **Every paying place, worst first — and empty until the `podium` step.**
+     *
+     * All of them at once, because they arrive at once. Non-empty is therefore
+     * also the frame's word for "the podium is up", which is the flag the
+     * television's cull is armed by; it replaced a `place` field that, with one
+     * step showing everything, could only ever have said `1`.
+     */
     podium: SpeedrunPlace[];
-    /** The place going up right now, or null outside a `podium` step. */
-    place: number | null;
-    /** How many places pay, so the TV can draw the empty slots in advance. */
+    /** How many places pay, so the TV can say what the cull is for. */
     winners: number;
 }
 

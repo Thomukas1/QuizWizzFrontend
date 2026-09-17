@@ -21,6 +21,13 @@ export type { QuizWizzState, ConnectionStatus, Ending } from './quizwizz/store';
 
 export { connect, disconnect, send } from './quizwizz/socket';
 
+// The test harness. NPC players that join through the ordinary door and hold
+// their own sockets — never the one above, and never the store, which belongs to
+// this client's own connection. Dev-only by convention; `BotControl` is what
+// decides whether it is reachable.
+export { addBot, removeAllBots, subscribeBots, getBotsSnapshot } from './quizwizz/bots';
+export type { BotsState, BotSummary } from './quizwizz/bots';
+
 // Identity is read for display ("you are already joined") and cleared on leave.
 // Writing it is `api.ts`'s job — it happens the moment a token is minted.
 export { readHostToken, readPlayerIdentity, clearHostToken, clearPlayerIdentity } from './quizwizz/identity';

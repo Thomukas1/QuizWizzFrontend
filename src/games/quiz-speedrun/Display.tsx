@@ -27,9 +27,11 @@ import type { SpeedrunDisplayView } from './view';
  * to get a branch wrong; the frame says which one it is, in the one field whose
  * whole purpose is to say so.
  *
- * **The answer stays on screen as a strip** once the ring takes over. A room
- * watching people explode for ten seconds forgets what the question was, and the
- * host ends up reading it back out.
+ * **The ring takes the screen alone** — no recap strip, no question above it.
+ * The room has just watched the option turn green and it is the host's job to
+ * carry a question the room is looking away from anyway; a line of text over
+ * fifteen exploding faces was two things asking to be read at once, and the
+ * faces are the ones that have to be legible from three metres.
  *
  * It renders inside `<GameZone>`, so it supplies content and never layout.
  */
@@ -50,31 +52,15 @@ export default function SpeedrunDisplay({ state, players, deadline }: DisplayPro
   // the `crowd` step on, which makes this the frame's own word on which of the
   // two screens is up rather than a step table kept in sync by hand.
   const ring = reveal && reveal.crowd !== null;
-  const correctOption = reveal ? item.options.find(option => option.key === reveal.correct) : undefined;
 
   if (ring) {
     return (
       <div className="quiz-display quiz-display--ring">
-        {/* Small, and still there. Ten seconds of explosions is long enough for
-            a room to lose track of what was being asked, and the host should
-            not have to read it back out. */}
-        <header className="speedrun-recap">
-          {counter && <span className="speedrun-recap__counter">{counter}</span>}
-          <span className="speedrun-recap__prompt">{item.prompt}</span>
-          {correctOption && (
-            <span className="speedrun-recap__answer">
-              <span className="speedrun-recap__key">{correctOption.key}</span>
-              {correctOption.label}
-            </span>
-          )}
-        </header>
-
         <CrowdCircle
           players={players}
           crowd={reveal.crowd ?? []}
           winners={reveal.winners}
           podium={reveal.podium}
-          place={reveal.place}
         />
       </div>
     );
@@ -111,17 +97,6 @@ export default function SpeedrunDisplay({ state, players, deadline }: DisplayPro
       <footer className="quiz-display__foot">
         {(step === 'open' || step === 'locked') && (
           <LockedInCount answered={answered.length} expected={expected} size="lg" />
-        )}
-
-        {/* On `answer`, and only there: the room has the correct option and not
-            one word about who got it. That gap is the crowd step's whole job,
-            and filling it here would spend the format's best beat early. */}
-        {reveal && (
-          <p className="speedrun-hold">
-            {reveal.winners === 1
-              ? 'One place pays. Who was fastest?'
-              : `Only the ${reveal.winners} fastest score…`}
-          </p>
         )}
       </footer>
     </div>

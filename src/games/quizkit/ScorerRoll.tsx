@@ -30,9 +30,26 @@ interface ScorerRollProps {
   players: PublicPlayer[];
   /** `reveal.scorers` — ids, in the order they answered. */
   scorers: string[];
+  /**
+   * What the row is a row *of*.
+   *
+   * Copy, and copy belongs to the client — but it belongs to the **format**
+   * rather than to the kit, because what these faces have in common is not the
+   * same fact in every round. In the warmup they knew the answer; in Popularity
+   * there was no answer and they read the room. One word of difference, and a
+   * default so the format that doesn't care says nothing.
+   */
+  header?: string;
+  /** What an empty row announces. The absence is usually the funnier result. */
+  nobody?: string;
 }
 
-export function ScorerRoll({ players, scorers }: ScorerRollProps) {
+export function ScorerRoll({
+  players,
+  scorers,
+  header = 'Answered correctly:',
+  nobody = 'Nobody got it right',
+}: ScorerRollProps) {
   const roster = useMemo(() => new Map(players.map(player => [player.id, player])), [players]);
 
   /**
@@ -86,7 +103,7 @@ export function ScorerRoll({ players, scorers }: ScorerRollProps) {
           its own joke. */}
       {count > 0 && <Bubbles />}
 
-      <span className="scorer-roll__header">Answered correctly:</span>
+      <span className="scorer-roll__header">{header}</span>
 
       {count === 0 ? (
         /*
@@ -96,7 +113,7 @@ export function ScorerRoll({ players, scorers }: ScorerRollProps) {
           happens all evening. So it gets said out loud, in the colour that
           means something went wrong, and the joke is that nothing did.
         */
-        <p className="scorer-roll__nobody">Nobody got it right</p>
+        <p className="scorer-roll__nobody">{nobody}</p>
       ) : (
         <div className="scorer-roll__track" ref={scroller}>
           {scorers.slice(0, shown).map(id => {

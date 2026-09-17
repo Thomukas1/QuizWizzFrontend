@@ -73,15 +73,44 @@ interface AnswerableFrame {
   options?: { key?: string }[];
   /** Echoed back once the server has taken an answer. Non-null means locked in. */
   yourChoice?: string | null;
+  /**
+   * The module's own step id — part of what a bot has already answered, and
+   * nothing else.
+   *
+   * An item used to be the whole of that, until Popularity asked one item twice:
+   * an opinion on one step and a prediction on the next, against the same
+   * `itemId`. Keyed on the item alone a bot answers the first question and sits
+   * out every second one, which does not look like a broken harness — it looks
+   * like a format where the room never predicts anything.
+   *
+   * `step` is on `QuizPlayerBase` beside the four fields above, so this stays as
+   * generic as they are: a bot still knows nothing about any format, it just
+   * counts "answered" per question rather than per item.
+   */
+  step?: string;
 }
 
 /** A decision a bot has made privately and is queued to send. */
 interface PendingAnswer {
   runId: string;
   itemId: string;
+  /** What this intent counts as having answered. See `stampOf`. */
+  stamp: string;
   /** Option keys as the frame offered them. The choice is rolled when it fires. */
   options: string[];
 }
+
+/**
+ * **One question, once** — the key a bot remembers having answered by.
+ *
+ * The run and the item, plus the step, because a format may ask about one item
+ * more than once and a bot that dedupes by item would answer only the first of
+ * them. Within a single step it still does exactly what it always did: stop a
+ * repeated frame turning into a second submission before `yourChoice` echoes
+ * back.
+ */
+const stampOf = (runId: string, itemId: string, step?: string): string =>
+  `${runId}:${itemId}:${step ?? ''}`;
 
 interface BotRuntime {
   id: string;
@@ -96,7 +125,7 @@ interface BotRuntime {
   socket: WebSocket | null;
   /** Stale frames are dropped by `rev`, exactly as the real store drops them. */
   lastRev: number;
-  /** `runId:itemId` of everything already sent, so a repeated frame can't double-submit. */
+  /** `stampOf` for everything already sent, so a repeated frame can't double-submit. */
   submitted: Set<string>;
   /** What this bot is waiting for a turn to say. Overwritten by a newer frame. */
   pending: PendingAnswer | null;
@@ -185,9 +214,8 @@ function step(): void {
   bot.pending = null;
   if (!decision) return;
 
-  const stamp = `${decision.runId}:${decision.itemId}`;
-  if (bot.submitted.has(stamp)) return;
-  bot.submitted.add(stamp);
+  if (bot.submitted.has(decision.stamp)) return;
+  bot.submitted.add(decision.stamp);
 
   sendAs(bot, {
     type: 'player:answer',
@@ -236,12 +264,13 @@ function consider(bot: BotRuntime, frame: ViewFrame | null): void {
     return;
   }
 
-  if (bot.submitted.has(`${frame.runId}:${view.itemId}`)) {
+  const stamp = stampOf(frame.runId, view.itemId, view.step);
+  if (bot.submitted.has(stamp)) {
     bot.pending = null;
     return;
   }
 
-  bot.pending = { runId: frame.runId, itemId: view.itemId, options };
+  bot.pending = { runId: frame.runId, itemId: view.itemId, stamp, options };
   startTicking();
 }
 

@@ -1,0 +1,383 @@
+/* ============================================================
+   Popularity — two questions on one set of buttons, and a chart
+   ============================================================
+   The format asks the same four options about twice inside ninety seconds, and
+   the second question is not the first one repeated. Almost everything in this
+   file exists to make that difference visible before somebody answers on
+   autopilot — an accent, a kicker, and a phone that repaints a whole beat before
+   its buttons go live.
+
+   The quiz kit draws the question screen and the buttons; this file only tints
+   them. The chart is the one thing here with no kit equivalent, because no other
+   format reveals a result the room itself wrote. */
+
+/* ── The two phases, as one variable ────────────────────────────────────────
+   `phase` is on the frame for exactly this: a client switching on step ids to
+   pick a colour writes the format's step table down a second time, in another
+   repo. Every rule below reads `--phase-accent` and nothing reads a step.
+
+   Lime for the honest half — the app's "look here" colour, on the question the
+   room is answering for itself. Amber for the guess: a warmer, riskier note,
+   and the one moment in a quiz where being confident can cost you. Both are
+   palette tokens, so a reskin carries them. */
+
+.popularity--opinion,
+.popularity-player--opinion {
+  --phase-accent: var(--accent);
+  --phase-glow: rgba(182, 248, 51, 0.3);
+}
+
+.popularity--prediction,
+.popularity-player--prediction {
+  --phase-accent: var(--color-warning);
+  --phase-glow: rgba(245, 166, 35, 0.32);
+}
+
+/* The chart. Neither question is live, so the accent goes back to the house
+   colour and the result owns whatever attention is left. */
+.popularity--reveal,
+.popularity-player--reveal {
+  --phase-accent: var(--accent);
+  --phase-glow: transparent;
+}
+
+/* ============================================================
+   The television — the question screen
+   ============================================================ */
+
+/* The kicker sits above the prompt inside the billing column, so the counter
+   still gets its fifth and the question still starts at the top of the screen. */
+.popularity__ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+/* Which of the two questions this is. Uppercase, spaced, in the phase's own
+   colour — it is the eyebrow pattern, and it is doing the eyebrow's job: telling
+   a room what it is looking at before it reads the words underneath. */
+.popularity__kicker {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-sm), 1.2vw, var(--font-size-2xl));
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--phase-accent);
+  text-shadow: 0 0 12px var(--phase-glow), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* The line under the options while the buttons are dead — what this question is
+   worth, which is the strategic wrinkle and the reason the first half stays
+   honest. Quiet: it is a rule, not an announcement. */
+.popularity__hint {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-sm), 1.1vw, var(--font-size-xl));
+  color: var(--text-muted);
+}
+
+/* **The option rows, carrying the phase.** The kit's grid is untouched and this
+   is a tint over it: the same four rows the room just answered, wearing a
+   different colour so nobody answers them twice without noticing.
+
+   Only the prediction half is lit. The opinion half is the neutral question
+   screen every other format draws, which is what makes the change register —
+   two decorated states read as decoration, one reads as a change. */
+.popularity--prediction .option-grid__row {
+  border-color: var(--phase-accent);
+  box-shadow: 0 0 22px -6px var(--phase-glow);
+}
+
+.popularity--prediction .option-grid__key {
+  color: var(--phase-accent);
+}
+
+/* ============================================================
+   The chart
+   ============================================================
+   Columns arrive lowest first, one per server beat. Nothing here is timed on
+   this side: a column exists or it does not, and the growth animation runs once
+   on mount because React keys it by the option. */
+
+.pop-chart {
+  width: min(100%, 1000px);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+
+  /**
+   * **How tall the whole room is**, as a fraction of the lane.
+   *
+   * Every bar is a share of `totalVotes`, so a question everybody answers the
+   * same way produces one bar at 100% — and the count hangs off the top of a bar
+   * with the crown above that. At a true ceiling of 100% both of those would be
+   * outside the plot, and `.quiz-display__main` clips. So the axis tops out
+   * short of the lane and the difference is the headroom the figures live in.
+   *
+   * It is a ceiling on the *drawing*, not on the number: the percentage under
+   * each bar is the real share either way, which is the whole reason the scale
+   * is the room rather than the tallest column.
+   */
+  --plot-ceiling: 85%;
+}
+
+/* Equal columns, always `--slots` of them — the ones that have not arrived are
+   drawn as blanks so the axis keeps its shape and, more importantly, so the
+   finishing order is not laid out on the wall before the first bar grows. */
+.pop-chart__plot {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--slots, 4), 1fr);
+  align-items: end;
+  gap: clamp(var(--space-sm), 1.6vw, var(--space-2xl));
+  /* Where the crown on a near-unanimous column goes. See `--plot-ceiling`. */
+  padding-top: clamp(3.5rem, 7vh, 6rem);
+}
+
+.pop-chart__col {
+  min-width: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+}
+
+/* Not up yet: a dashed floor and nothing else. No label, no letter, no height —
+   a blank that can be read is a blank that spoils the reveal. */
+.pop-chart__col--empty {
+  align-self: end;
+  height: 6px;
+  border-bottom: 2px dashed var(--border-color);
+  opacity: 0.5;
+}
+
+/* The lane a bar grows inside. `position: relative` so the fill can anchor to
+   the floor and the number can hang off the fill's top edge. */
+.pop-chart__track {
+  position: relative;
+  min-height: 0;
+  border-bottom: 2px solid var(--divider);
+}
+
+/* **The bar.** `height` is set once, from the share, and never transitions;
+   what animates is a `scaleY` from nothing, which stays on the compositor while
+   the whole room watches. Anything living inside this would be stretched flat
+   and squeezed back, which is why the number is a sibling. */
+.pop-chart__fill {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  height: calc(var(--share) * var(--plot-ceiling));
+  /* A floor, so an option nobody picked is a visible nub on the axis rather
+     than a missing column. Zero is a result and the room should see it. */
+  min-height: 4px;
+  background: linear-gradient(180deg, var(--brand) 0%, var(--p-cobalt) 100%);
+  border: 2px solid var(--border-color);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transform-origin: bottom center;
+  animation: popBarGrow 1.5s cubic-bezier(0.16, 0.9, 0.3, 1) both;
+}
+
+/* Slow on purpose. Under about a second and a half it reads as a page loading
+   rather than as a result arriving, and this is the moment the format is
+   carried by — the server holds a whole step per column to buy it. */
+@keyframes popBarGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+/* The winner, or every option tied for it. Lime, lit, and it only ever lands on
+   the last column — `crowned` is empty until then. */
+.pop-chart__col--won .pop-chart__fill {
+  background: linear-gradient(180deg, var(--accent) 0%, var(--p-lime-2) 100%);
+  border-color: var(--accent);
+  box-shadow: 0 0 40px -8px var(--accent);
+}
+
+/* Hanging off the top of the bar, fading in as it arrives underneath. Delayed
+   past most of the growth so the number lands on a bar that has stopped moving
+   — a figure sliding up the screen is unreadable and the count is the payoff. */
+.pop-chart__count {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--share) * var(--plot-ceiling));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: var(--space-sm);
+  animation: popFigureIn 0.4s ease-out 1.1s both;
+}
+
+.pop-chart__votes {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-xl), 2.6vw, 46px);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--text-primary);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.pop-chart__col--won .pop-chart__votes {
+  color: var(--accent);
+}
+
+/* The share of the room, small under the count. A percentage is what
+   "popularity" actually means; the vote count is what makes it concrete in a
+   room of fifteen. Both, and the concrete one is the big half. */
+.pop-chart__share {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-xs), 1vw, var(--font-size-lg));
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* Above the number, on the winning column only — and on every winning column,
+   because a tie crowns all of them. It arrives after the bar has finished, so
+   the last thing that happens on the screen is the crown landing. */
+.pop-chart__crown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--share) * var(--plot-ceiling));
+  /* Clear of the count block below it. */
+  margin-bottom: clamp(3rem, 4.4vw, 4.6rem);
+  text-align: center;
+  font-size: clamp(var(--font-size-2xl), 3.4vw, 60px);
+  line-height: 1;
+  filter: drop-shadow(0 0 16px var(--p-lime));
+  animation: popCrownIn 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 1.4s both;
+}
+
+@keyframes popFigureIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popCrownIn {
+  from { opacity: 0; transform: scale(0.3) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Somebody who asked for less motion did not ask to be shown a chart with no
+   bars in it. Everything lands at full size, immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .pop-chart__fill,
+  .pop-chart__count,
+  .pop-chart__crown {
+    animation: none;
+  }
+}
+
+/* The x axis. The letter is the same letter that was on a button in somebody's
+   hand ninety seconds ago, and on the row this option had on the question
+   screen — it is the only thing tying the three together. */
+.pop-chart__foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: var(--space-xs);
+  min-width: 0;
+}
+
+.pop-chart__key {
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-base), 1.4vw, var(--font-size-2xl));
+  line-height: 1;
+  color: var(--accent);
+}
+
+.pop-chart__label {
+  max-width: 100%;
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-sm), 1.3vw, var(--font-size-2xl));
+  font-weight: var(--font-weight-bold);
+  line-height: 1.15;
+  text-align: center;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pop-chart__col--won .pop-chart__label {
+  color: var(--accent);
+}
+
+/* ============================================================
+   The phone
+   ============================================================ */
+
+/* Which question these buttons are, in two lines above them. The television is
+   saying the same thing three metres away — but this is the one format where
+   both questions are answered on identical controls, and the person holding the
+   phone is looking down at it when the second one opens. */
+.popularity-player__ask {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.popularity-player__title {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--phase-accent);
+}
+
+.popularity-player__note {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* **The glow.** A ring in the phase's colour around every button, so the second
+   question does not look like the first one still open.
+
+   Only on the live half: a dead button under the intro or the reveal keeps the
+   kit's own dimmed treatment, because a glowing button that ignores a tap is
+   worse than a plain one. `:not(:disabled)` is doing that, not a class. */
+.popularity-player--prediction .option:not(:disabled) {
+  border-color: var(--phase-accent);
+  box-shadow: 0 0 0 1px var(--phase-glow), 0 0 18px -4px var(--phase-glow);
+}
+
+.popularity-player--prediction .option:not(:disabled) .option__key {
+  color: var(--phase-accent);
+}
+
+/* A locked-in choice is still the kit's lime-on-blue — that state means "the
+   server has your answer" in every format and must not drift per phase. The
+   ring is the only thing the phase owns. */
+.popularity-player--prediction .option--chosen {
+  border-color: var(--accent);
+}
+
+/* **"You picked Fox."** Their own phase A answer, the one thing about the tally
+   a phone may know early, because it is theirs. Small, under the buttons, out
+   of the thumb's way — it is a reminder, not an instruction, and the whole point
+   is that nobody can remember what they picked ninety seconds later. */
+.popularity-player__recall {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.popularity-player__recall strong {
+  font-family: var(--font-accent);
+  font-weight: var(--font-weight-bold);
+  /* Sage is the warm note and is reserved for where a person is present rather
+     than a rule. This is the closest thing on a phone: what *you* said. */
+  color: var(--text-soft);
+}

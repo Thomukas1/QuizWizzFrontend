@@ -59,6 +59,28 @@ interface AnswerLock {
 interface AnswerLockOptions {
   /** The item on the frame. Null outside an item — nothing to submit against. */
   itemId: string | null;
+  /**
+   * **Which attempt at this item this is**, for a format that collects more than
+   * one answer against the same item.
+   *
+   * Everything below is scoped by item, which was the whole story until
+   * Popularity asked the same item twice — an opinion, then a prediction, on one
+   * `itemId`. The server hands that phone `yourChoice: null` when the second
+   * question opens, correctly, but the local memory underneath still matches on
+   * the item alone and would repaint the first answer as locked in, with every
+   * button dead and nothing to do about it.
+   *
+   * So a caller that has two attempts names them (Popularity passes
+   * `state.phase`) and a caller with one leaves this out. **It never reaches the
+   * wire**: `answer()` is still called with the real `itemId`, and the ack is
+   * still matched on it, because the server has one item here too. This scopes
+   * what is remembered, not what is sent.
+   *
+   * The server kit draws the same line with `shows` on a step — which of an
+   * item's stores a step is about is a thing a format declares rather than
+   * something either side infers.
+   */
+  round?: string | null;
   /** `state.yourChoice`, echoed back by the server. It wins over everything. */
   yourChoice: string | null;
   /** Whether the buttons are live, off the frame. */
@@ -67,20 +89,24 @@ interface AnswerLockOptions {
   answer: (itemId: string, choice: unknown) => void;
 }
 
-/** A record is only about the item it was made for; anything older is ignored. */
-interface ForItem {
-  itemId: string;
+/** A record is only about the attempt it was made for; anything else is ignored. */
+interface ForScope {
+  scope: string;
   value: string;
 }
 
-export function useAnswerLock({ itemId, yourChoice, open, answer }: AnswerLockOptions): AnswerLock {
+export function useAnswerLock({ itemId, round, yourChoice, open, answer }: AnswerLockOptions): AnswerLock {
   // Just the ack, not the whole store: `set()` preserves the field's identity
   // unless the field changed, so this re-renders on an ack and on nothing else.
   const ack = useSyncExternalStore(subscribe, () => getSnapshot().ack);
 
-  const [pending, setPending] = useState<ForItem | null>(null);
-  const [locked, setLocked] = useState<ForItem | null>(null);
-  const [notice, setNotice] = useState<ForItem | null>(null);
+  const [pending, setPending] = useState<ForScope | null>(null);
+  const [locked, setLocked] = useState<ForScope | null>(null);
+  const [notice, setNotice] = useState<ForScope | null>(null);
+
+  // What every record below is about: this attempt at this item. Without a
+  // `round` it is the item, which is what it always was.
+  const scope = itemId === null ? null : `${itemId}#${round ?? ''}`;
 
   // Which ack has already been acted on. Without it the effect would re-run on
   // its own `setPending` and process the same refusal twice.
@@ -91,20 +117,25 @@ export function useAnswerLock({ itemId, yourChoice, open, answer }: AnswerLockOp
     handled.current = ack.seq;
 
     // An ack for the item before this one: the frame has already moved on and
-    // whatever it says is about a question nobody is looking at.
-    if (!itemId || ack.itemId !== itemId) return;
+    // whatever it says is about a question nobody is looking at. **Matched on
+    // the item, not the scope** — the server has one item here and its ack says
+    // so; the round is this side's own bookkeeping.
+    if (!itemId || !scope || ack.itemId !== itemId) return;
 
     const release = (reason?: QuizWizzReason) => {
       setPending(null);
       const text = reason ? NOTICE[reason] : undefined;
-      setNotice(text ? { itemId, value: text } : null);
+      setNotice(text ? { scope, value: text } : null);
     };
 
     // Accepted, or already held — both mean locked in. The key is whatever was
     // tapped; when there is no pending tap (a resend after a reconnect) the
     // next frame's `yourChoice` says it instead, so there is nothing to guess.
     if (ack.accepted || ack.reason === 'already_answered') {
-      if (pending?.itemId === itemId) setLocked(pending);
+      // Only if the tap it answers belongs to the attempt on screen. A phase A
+      // answer acknowledged after phase B opened clears the stale pending tap
+      // and locks nothing, which is the case this scoping exists for.
+      if (pending?.scope === scope) setLocked(pending);
       setPending(null);
       setNotice(null);
       return;
@@ -119,30 +150,32 @@ export function useAnswerLock({ itemId, yourChoice, open, answer }: AnswerLockOp
     // `pending` is a dependency so the effect reads the tap this ack answers,
     // and the `handled` guard above is what stops it acting on the same ack
     // again when that tap changes underneath it.
-  }, [ack, itemId, pending]);
+  }, [ack, itemId, scope, pending]);
 
   const pick = useCallback(
     (key: string) => {
       // The frame decides whether a tap is allowed. Guarded here as well as in
       // the button's `disabled`, because a tap that beats a frame by 50ms would
       // otherwise earn a refusal the room reads as a bug.
-      if (!itemId || !open) return;
-      setPending({ itemId, value: key });
+      if (!itemId || !scope || !open) return;
+      setPending({ scope, value: key });
       setNotice(null);
+      // The real item, always. The round scopes what is remembered here, never
+      // what is sent.
       answer(itemId, key);
     },
-    [itemId, open, answer],
+    [itemId, scope, open, answer],
   );
 
   // `yourChoice` is the server's own word and outranks anything held locally —
   // a reconnecting phone repaints its locked-in answer from this alone.
   const chosen =
-    yourChoice ?? (locked && locked.itemId === itemId ? locked.value : null);
+    yourChoice ?? (locked && locked.scope === scope ? locked.value : null);
 
   return {
     chosen,
-    pending: !chosen && pending?.itemId === itemId ? pending.value : null,
-    notice: notice?.itemId === itemId ? notice.value : null,
+    pending: !chosen && pending?.scope === scope ? pending.value : null,
+    notice: notice?.scope === scope ? notice.value : null,
     pick,
   };
 }

@@ -60,6 +60,12 @@ const PLAYLIST: { gameId: string; title: string; config?: Record<string, unknown
    * the key that always wins.
    */
   { gameId: 'quiz-match3', title: 'Match-3', config: { content: 'match3-01' } },
+  /**
+   * The recovery round, and the one to end on. It is the slowest format in the
+   * set — two questions per item — so four to six items is a round, and the
+   * content file's own length is the lever rather than anything here.
+   */
+  { gameId: 'quiz-popularity', title: 'Popularity', config: { content: 'popularity-01' } },
 ];
 
 /**
@@ -86,6 +92,17 @@ const FAST_CONFIG: Record<string, unknown> = {
    * through. A short content file in the playlist row above is the real lever.
    */
   countdownMs: 1_000,
+  /**
+   * Popularity's two questions, which are separate keys because the asymmetry
+   * between them is the format: ten seconds of gut reaction, twice that to think
+   * about the room. A module only reads the keys it knows, so naming them here
+   * costs the other three formats nothing.
+   */
+  opinionDurationMs: 4_000,
+  predictionDurationMs: 5_000,
+  switchMs: 600,
+  /** The chart. Short enough to get through, long enough to still be a reveal. */
+  barGrowthMs: 700,
 };
 
 const configForPlaylist = (): Record<string, unknown> =>

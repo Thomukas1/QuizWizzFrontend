@@ -380,3 +380,71 @@ The one thing that is *deliberately* not shared is the running score: `yourScore
 is on `WarmupPlayerView`, not on `QuizPlayerBase`, because the warmup pays per
 correct answer and Deathmatch pays only the three fastest. Each format projects
 its own, and a phone renders whatever number it is handed.
+
+---
+
+## 9. What Popularity actually cost
+
+All four formats are built, and the property above held for three of them. The
+fourth is the interesting one, so here is the honest diff: the copied `view.ts`,
+`Display.tsx`, `Player.tsx`, `PopularityChart.tsx`, a stylesheet, a registry row,
+a playlist row — **and three additive changes to shared code**, all of them the
+same assumption in three places.
+
+That assumption is **one answer per item**, and it was baked into both kits and
+the bot harness. None of the three was a special case for this game, and the one
+on the server has a twin here, which is the test of that claim: if the same
+shortcut had to be widened on both sides, it was a shortcut and not a seam.
+
+**`useAnswerLock` now takes a `round`.** Popularity is the first format that
+collects two answers against one `itemId` — an opinion, then a prediction. The
+hook's local `pending` / `locked` / `notice` records were scoped by item, so the
+first answer matched the second question and the phone opened phase B with every
+button dead and a locked-in choice nobody could change. The round scopes what is
+*remembered*; `answer()` still sends the real item and the ack is still matched
+on it. A format with one answer per item passes nothing and behaves exactly as
+before.
+
+> The server's twin is `shows` on a `QuizStep`. Its kit had the same shortcut in
+> the other direction — it decides which of an item's stores a projection is
+> about by walking back for the last one *collected*, which is wrong on a step
+> belonging to a question that has not opened yet. Same fix, same shape: the
+> format declares it, in the table where everything else about a step is
+> declared.
+
+**A bot's `submitted` set is keyed by question, not by item.** Same assumption,
+third place — and the one that bites hardest in practice, because bots are how
+you test a format. Keyed `runId:itemId`, a flock answers every opinion and sits
+out every prediction, which does not read as a broken harness: it reads as a
+format where the room never predicts anything and the clock always runs the full
+twenty seconds. The key now carries `step`, which is on `QuizPlayerBase` beside
+the other four fields a bot reads, so the harness still knows nothing about any
+format.
+
+**`ScorerRoll` now takes `header` and `nobody`.** Both were hardcoded to the
+warmup's wording. What the faces have in common is not the same fact in every
+format — here nobody answered anything correctly, they read the room — and the
+empty row is funnier in this format than in any other, so it gets its own
+sentence.
+
+### The rest of it, for the next format
+
+- **Branch on data, not on step ids.** `reveal === null` is the question screen
+  and non-null is the chart, the same way Speedrun switches on `reveal.crowd`.
+  Nine step ids and two layouts would be eight chances to get a branch wrong.
+- **`reveal.scorers` is `string[] | null`**, and that is deliberate — null
+  through the chart, a list on the step that names them. It is the same idiom as
+  Speedrun's `crowd`, and it exists so "nobody called it" and "not yet" are
+  different things on the wire instead of the client reading a step id to tell
+  them apart.
+- **`phase` drives the accent, not the step.** It flips to `prediction` on the
+  `switch` beat — a whole step before the buttons go live — so the phone repaints
+  while they are still dead and nobody's thumb lands on a freshly-coloured
+  button. That beat is the only thing standing between this format and fifteen
+  people answering the second question on autopilot.
+- **The chart has no timer.** `reveal.bars` is a growing prefix and the server
+  holds a step per column, so a column's growth animation runs once, on mount,
+  because React keys it by the option. A local interval here would restart from
+  the first column on every frame push — which is the bug `ScorerRoll` keeps a
+  `rollKey` to avoid, and it simply cannot arise if nothing is being timed on
+  this side.

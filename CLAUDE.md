@@ -53,7 +53,8 @@ repaint. That is why nothing is cached and there is no resume protocol.
   a similar one; two props of divergence is the most that should ever be needed to bridge them.
 - **`src/primitives/`** — presentation only, no domain shape. If it encodes a product concept, it
   is a `components/` block.
-- **`src/games/registry.ts`** — the round formats. Empty so far; see "Adding a game" below.
+- **`src/games/registry.ts`** — the round formats. All four quizzes are in it; see "Adding a game"
+  below, and `FRONTEND-QUIZZES.md` §9 for the two places the fourth one had to widen the kit.
 
 No app-wide providers and no context. The session is a module-scope observable
 (`services/quizwizz/store.ts`) that React reads with `useSyncExternalStore`, so the socket — which

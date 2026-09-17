@@ -46,6 +46,7 @@
 @import './components/quiz-kit.css';
 @import './components/speedrun.css';
 @import './components/match3.css';
+@import './components/popularity.css';
 
 /* Tailwind CSS */
 @tailwind base;

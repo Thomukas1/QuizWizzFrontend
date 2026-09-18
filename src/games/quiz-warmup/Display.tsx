@@ -5,8 +5,8 @@ import {
   ExplainNote,
   GameRules,
   LockedInCount,
-  MediaStrip,
   OptionGrid,
+  QuestionMedia,
   RULES_STEP,
   ScorerRoll,
 } from '../quizkit';
@@ -98,10 +98,24 @@ export default function WarmupDisplay({ state, players, deadline }: DisplayProps
       </header>
 
       <div className="quiz-display__main">
-        <MediaStrip media={item.media} />
+        {/* **Gone the moment the answer lands.** The reveal brings a row of
+            faces along the bottom and, on some items, a picture of its own, and
+            the question's picture has already done its job by then — it is the
+            one thing on this screen nobody is looking at any more. Dropping it
+            is what pays for the two that arrive. */}
+        {!reveal && <QuestionMedia media={item.media} />}
+
         {/* `reveal` is null until its step, so the green is a fact of the frame
-            rather than something this component has to be trusted to withhold. */}
-        <OptionGrid options={item.options} correct={reveal?.correct ?? null} />
+            rather than something this component has to be trusted to withhold.
+
+            `correctOnly` on the items that reveal a picture: that picture is the
+            beat, and four rows the room read thirty seconds ago are what it
+            would be sharing the screen with. */}
+        <OptionGrid
+          options={item.options}
+          correct={reveal?.correct ?? null}
+          correctOnly={!!reveal?.explainMedia}
+        />
 
         {/* Directly under the choices, because it is about the one that just
             turned green. The component renders nothing when the item has

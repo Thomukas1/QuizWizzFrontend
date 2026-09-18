@@ -167,25 +167,40 @@
   min-height: 0;
 }
 
-/* Deliberately smaller than `.media-strip__frame`, which is the prompt's slot
-   and the subject of its own screen. This one is a footnote to an answer that
-   has already landed, so it is sized to sit beside a line of text rather than
-   to take the band. `vh` rather than `vw`: what it competes with is everything
-   above and below it. */
+/* The same frame as `.question-media` — see the media section — and a smaller
+   ceiling. Beside a sentence this is a footnote to an answer that has already
+   landed, so it is sized to sit next to a line of text rather than to take the
+   band. `vh` rather than `vw`: what it competes with is everything above and
+   below it. */
 .quiz-explain__media {
+  --quiz-media-cap: clamp(88px, 15vh, 210px);
   flex: 0 0 auto;
-  height: clamp(88px, 15vh, 210px);
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 2px solid var(--border-color);
 }
 
 /* A picture that needs no sentence — the album cover, the face, the map — is
    the subject rather than the footnote, so it takes the room the sentence would
    have had. */
 .quiz-explain--media-only .quiz-explain__media {
-  height: clamp(120px, 24vh, 320px);
+  --quiz-media-cap: clamp(120px, 24vh, 320px);
+}
+
+/* **The reveal that is a picture, on the standard quiz screen.** The question's
+   own picture has just been dropped and the options trimmed to the one that went
+   green, which is exactly the room this was short of — so it takes it. Scoped to
+   `.quiz-display__main` because Match-3 reads its explanation inside its own
+   arena, on a five-second hold with a board still on screen, and has no such
+   room to give. */
+.quiz-display__main:has(.quiz-explain__media) .option-grid {
+  --option-size: clamp(var(--font-size-base), 1.4vw, 28px);
+  --option-pad-y: clamp(var(--space-xs), 0.7vh, var(--space-sm));
+}
+
+.quiz-display__main .quiz-explain__media {
+  --quiz-media-cap: clamp(120px, 26vh, 360px);
+}
+
+.quiz-display__main .quiz-explain--media-only .quiz-explain__media {
+  --quiz-media-cap: clamp(140px, 34vh, 480px);
 }
 
 /* ── The opening: a card, then 3 · 2 · 1 ────────────────────────────────────
@@ -307,7 +322,13 @@
    The same letters as the phone, in the same order. The letter is the only
    thing tying a button in a hand to a line on the screen. */
 
+/* The two dials a crowded band turns down — see `:has(.question-media)` in the
+   media section. Declared here so the grid is complete on its own and the
+   override is two lines rather than a second copy of every rule. */
 .option-grid {
+  --option-size: clamp(var(--font-size-lg), 2vw, 40px);
+  --option-pad-y: clamp(var(--space-sm), 1.2vh, var(--space-lg));
+
   list-style: none;
   margin: 0;
   padding: 0;
@@ -316,12 +337,20 @@
   gap: clamp(var(--space-sm), 1.2vh, var(--space-lg));
 }
 
+/* Trimmed to the one that went green, on a reveal that also has a picture to
+   show. It stops claiming the full 900px and hugs its own answer, so it reads
+   as a caption to the picture rather than as a grid with three rows missing. */
+.option-grid--solo {
+  width: auto;
+  max-width: min(100%, 900px);
+}
+
 .option-grid__row {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: clamp(var(--space-md), 1.4vw, var(--space-2xl));
-  padding: clamp(var(--space-sm), 1.2vh, var(--space-lg)) clamp(var(--space-md), 1.4vw, var(--space-2xl));
+  padding: var(--option-pad-y) clamp(var(--space-md), 1.4vw, var(--space-2xl));
   background: var(--bg-surface);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -334,7 +363,7 @@
 
 .option-grid__key {
   font-family: var(--font-display);
-  font-size: clamp(var(--font-size-lg), 2vw, 40px);
+  font-size: var(--option-size);
   line-height: 1;
   color: var(--accent);
   min-width: 1.4em;
@@ -342,7 +371,7 @@
 
 .option-grid__label {
   font-family: var(--font-accent);
-  font-size: clamp(var(--font-size-lg), 2vw, 40px);
+  font-size: var(--option-size);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
 }
@@ -363,23 +392,92 @@
 }
 
 /* ── Media ──────────────────────────────────────────────────────────────────
-   Empty on every item today. The slot exists so the first illustrated round is
-   a content change rather than a refactor. */
+   A picture in a question, and the picture that proves the answer. One frame
+   serves both, because they are the same object seen at two moments — what
+   differs is how much room each is given, which is `--quiz-media-cap` and
+   nothing else.
 
-.media-strip {
-  display: grid;
-  grid-template-columns: repeat(var(--media-columns, 1), 1fr);
-  gap: var(--space-lg);
-  max-height: 34vh;
+   **The frame hugs the picture.** Content images arrive portrait, landscape and
+   square in the same round, and the fixed 4:3 crop this replaced turned a tall
+   photograph into its own middle third. So `.img-el` comes out of the primitive's
+   absolute fill and back into flow: the image sizes the box, the box is capped,
+   and the border and shadow end up around the photograph rather than around a
+   crop of it. Nothing measures anything — this is all the cascade.
+
+   Capped in `vh` on purpose. The host view never scrolls and the band this sits
+   in is a known slice of a fixed viewport, so a viewport-relative ceiling is
+   both the simplest thing that works and the only one that does not depend on a
+   percentage height resolving through a shrink-wrapped flex item. */
+
+.quiz-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  border-radius: var(--radius-lg);
+  /* A little brighter than a card's edge: this one is holding something up
+     rather than dividing two things, and at three metres a 30%-steel hairline
+     around a photograph disappears into the photograph. */
+  border: 3px solid var(--divider);
+  /* The primitive fills its frame with `--bg-secondary` for the shimmer to sit
+     on. Once the box is the picture's own shape there is nothing left to fill,
+     and a background would only show as a seam on a transparent PNG. */
+  background: transparent;
+  /* Lifted off the backdrop rather than laid on it — the drop shadow does the
+     separating and the outline keeps the edge crisp where the image goes dark. */
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
 }
 
-.media-strip__frame {
-  height: 100%;
-  max-height: 34vh;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 2px solid var(--border-color);
+/* Out of the primitive's absolute fill and into flow, so the frame above can be
+   sized by what it contains. */
+.quiz-media .img-el {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: var(--quiz-media-cap, 30vh);
+}
+
+/* Nothing has decoded yet, so there is no shape to take — the frame holds a
+   landscape placeholder for the shimmer to live in and drops it the moment the
+   image can size the box itself. It comes back on a gateway retry, which
+   remounts the `<img>` without its loaded flag, and that is correct: the frame
+   should be a waiting box again for as long as it is waiting. */
+.quiz-media:not(:has(.img-el[data-loaded])) {
+  height: var(--quiz-media-cap, 30vh);
+  aspect-ratio: 16 / 9;
+}
+
+/* The question's own picture: the largest thing in the band, and the reason the
+   options below it get smaller. */
+.question-media {
+  --quiz-media-cap: clamp(120px, 32vh, 460px);
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+/* **The band, when the question has a picture.** Picture at the top under the
+   clock, options along the bottom, and the room between them spent on the thing
+   that needs it.
+
+   Driven by `:has()` rather than by a flag threaded through three display
+   components, for the same reason `<ReactionBar>` is mounted by one scene and no
+   other: the layout is then a fact of what is on the screen, not a rule two
+   formats have to remember to pass in step. `<QuestionMedia>` renders nothing
+   when the item has no picture, so this never matches on a text-only item. */
+.quiz-display__main:has(.question-media) {
+  justify-content: space-between;
+}
+
+/* Smaller, because the picture is the question and these are the answers to it.
+   Two custom properties rather than a second copy of the row rules — the grid
+   below declares its own defaults and this only moves the dials. */
+.quiz-display__main:has(.question-media) .option-grid {
+  --option-size: clamp(var(--font-size-base), 1.4vw, 28px);
+  --option-pad-y: clamp(var(--space-xs), 0.7vh, var(--space-sm));
 }
 
 /* ── Scorer roll ────────────────────────────────────────────────────────────
@@ -461,24 +559,48 @@
   opacity: 1;
 }
 
+/* The frame: the width of the box, and it never moves. The rail inside it does.
+   No scroller — nobody is reaching for a scrollbar three metres away, and a
+   smooth scroll re-aimed every 300ms never arrives (see `ScorerRoll.tsx`). */
 .scorer-roll__track {
   width: 100%;
+  overflow: hidden;
+  padding: var(--space-xs) 0;
+  /* **The frame's width comes from the box, never from the faces in it.** The
+     rail inside is `max-content` wide on purpose, and that width is an intrinsic
+     contribution: without containment it travels up through `.quiz-display`'s
+     one auto column, and the column — not this box, which stays 900px — grows
+     past the screen. Which is a row of twelve faces cutting the question off on
+     the right. Inline containment is the declaration that says exactly this. */
+  contain: inline-size;
+}
+
+/* Faces sliding out of a hard edge look cut; fading them into the box reads as
+   travel. Only once the rail has actually moved — an unshifted row starts at
+   the left edge and the first face must not arrive half-dissolved. */
+.scorer-roll__track--travelled {
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--space-2xl), #000 100%);
+}
+
+/* Left, and growing right — the first face to appear is the first person in,
+   and it stays put until the row outgrows the frame and the whole rail travels.
+   `width: max-content` so the faces size themselves rather than being squeezed
+   into the frame, which is what makes the overflow measurable. */
+.scorer-roll__rail {
   display: flex;
-  /* Left, and growing right — the first face to appear is the first person in,
-     and it stays put while the row builds out from it. */
+  width: max-content;
   justify-content: flex-start;
   align-items: flex-end;
   gap: clamp(var(--space-md), 1.4vw, var(--space-2xl));
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: var(--space-xs) 0;
-  /* No scrollbar: nobody is reaching for it, the component drives the position,
-     and a grey bar under a row of faces is three metres of visual noise. */
-  scrollbar-width: none;
+  /* Shorter than POP_INTERVAL_MS, so every trip lands before the next face
+     arrives instead of being interrupted and re-aimed forever. Transform only:
+     the whole room is watching this. */
+  transition: transform 0.24s cubic-bezier(0.25, 0.9, 0.3, 1);
+  will-change: transform;
 }
 
-.scorer-roll__track::-webkit-scrollbar {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  .scorer-roll__rail { transition: none; }
 }
 
 .scorer-roll__tile {

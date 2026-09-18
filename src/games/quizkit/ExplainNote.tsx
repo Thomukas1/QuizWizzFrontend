@@ -16,14 +16,16 @@ import type { QuizMedia } from './view';
  * this renders nothing rather than an empty band, which is what an explanation
  * that isn't there should look like.
  *
- * `explainMedia` is one image and not a strip, which is the server's rule and
- * worth restating: this lands on a screen already carrying a correct answer,
- * bars and names, and the host is about to move on. `<MediaStrip>` is the
- * prompt's slot and can hold a pair to compare — a reveal cannot.
+ * `explainMedia` is one image and not a list, which is the server's rule and
+ * worth restating: this lands on a screen already carrying a correct answer and
+ * a row of names, and the host is about to move on.
  *
- * It goes through `<Img>` for the same reason the strip does: a stored Arweave
- * url names one gateway, and `services/arweave/` already owns failover, retries
- * and the shimmer that hides them.
+ * It goes through `<Img>` for the same reason `<QuestionMedia>` does: a stored
+ * Arweave url names one gateway, and `services/arweave/` already owns failover,
+ * retries and the shimmer that hides them. It wears the same `.quiz-media`
+ * frame, so a picture is the same object on both halves of an item — the
+ * difference between them is how much room it is given, which is the
+ * stylesheet's business and not this file's.
  */
 export function ExplainNote({ explain, media }: { explain: string | null; media: QuizMedia | null }) {
   // Nothing to say is the common case, and the honest render is nothing at all.
@@ -32,11 +34,14 @@ export function ExplainNote({ explain, media }: { explain: string | null; media:
   return (
     <div className={`quiz-explain${media && !explain ? ' quiz-explain--media-only' : ''}`}>
       {/* `kind` is switched on here and nowhere else, the same bargain
-          `<MediaStrip>` and `<Avatar>` make: an audio explanation becomes a
+          `<QuestionMedia>` and `<Avatar>` make: an audio explanation becomes a
           second member of the union and a branch in this file. */}
       {media?.kind === 'image' && (
         <Img
-          className="quiz-explain__media"
+          className="quiz-media quiz-explain__media"
+          // Contain, never cover. An explanation that has been cropped is not
+          // one — the proof is usually the part at the edge.
+          imgClassName="object-contain"
           src={media.url}
           alt={media.alt ?? ''}
           // On screen the moment the reveal arrives. There is no scrolling on a

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Avatar } from '../../components/Avatar';
 import { Bubbles } from '../../primitives/Bubbles';
 import type { PublicPlayer } from '../../services/quizwizz';
@@ -24,6 +24,15 @@ import type { PublicPlayer } from '../../services/quizwizz';
 
 /** Between pops. Slow enough to land as separate events rather than a shuffle. */
 const POP_INTERVAL_MS = 300;
+
+/**
+ * How far past the right edge the newest face sits before the rail travels.
+ *
+ * Zero would park each arrival flush against the frame, which reads as a face
+ * that only half arrived. The rail overshoots by this much so the newest tile
+ * lands with air beside it — the travel is what is visible, not the clipping.
+ */
+const TRAIL_PX = 24;
 
 interface ScorerRollProps {
   /** The roster, to put a name and a face to an id. */
@@ -64,7 +73,8 @@ export function ScorerRoll({
   const count = scorers.length;
 
   const [shown, setShown] = useState(0);
-  const scroller = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
+  const rail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setShown(0);
@@ -87,14 +97,34 @@ export function ScorerRoll({
     return () => clearInterval(id);
   }, [rollKey, count]);
 
-  // Follow the newest face. Fifteen people do not fit across a television, and
-  // the ones who scroll off are the ones who got there first — so the row
-  // travels rather than truncating, and nobody's moment happens off-screen.
-  useEffect(() => {
-    const element = scroller.current;
-    if (!element) return;
-    element.scrollTo({ left: element.scrollWidth, behavior: 'smooth' });
-  }, [shown]);
+  /**
+   * Follow the newest face. Fifteen people do not fit across a television, and
+   * the ones pushed off the left are the ones who got there first — so the row
+   * travels rather than truncating, and nobody's moment happens off-screen.
+   *
+   * **It moves the rail, it does not scroll.** A `scrollTo({behavior:'smooth'})`
+   * every 300ms is a smooth scroll interrupted and re-aimed before any of them
+   * ever arrives: the browser restarts the animation from wherever it got to,
+   * the target has meanwhile moved another tile right, and the row settles into
+   * a permanent lag of about one face — the newest arrival parked half off the
+   * edge, for the whole roll. A transform with a transition shorter than the
+   * interval lands every time, and is the only kind of motion this app spends
+   * on a screen the whole room is watching.
+   */
+  useLayoutEffect(() => {
+    const frame = viewport.current;
+    const strip = rail.current;
+    if (!frame || !strip) return;
+
+    // Layout width of the faces; the pop animation scales them, and a transform
+    // does not change what this measures.
+    const overflow = strip.scrollWidth + TRAIL_PX - frame.clientWidth;
+    const shift = Math.max(0, overflow);
+    strip.style.transform = `translateX(${-shift}px)`;
+    // The left-edge fade belongs to a row that has travelled; an unshifted one
+    // starts at the edge and its first face must not arrive half-dissolved.
+    frame.classList.toggle('scorer-roll__track--travelled', shift > 0);
+  }, [shown, rollKey]);
 
   return (
     <div className={`scorer-roll${count === 0 ? ' scorer-roll--empty' : ''}`}>
@@ -115,23 +145,27 @@ export function ScorerRoll({
         */
         <p className="scorer-roll__nobody">{nobody}</p>
       ) : (
-        <div className="scorer-roll__track" ref={scroller}>
-          {scorers.slice(0, shown).map(id => {
-            const player = roster.get(id);
-            // A scorer the roster no longer has — they quit between answering
-            // and the reveal. They earned it, so the tile keeps its place in
-            // the row; only the name is gone.
-            return (
-              <div key={id} className="scorer-roll__tile">
-                {player ? (
-                  <Avatar avatar={player.avatar} size={56} seed={player.id} offline={!player.connected} />
-                ) : (
-                  <div className="scorer-roll__ghost" aria-hidden="true" />
-                )}
-                <span className="scorer-roll__name">{player?.name ?? 'Gone'}</span>
-              </div>
-            );
-          })}
+        /* Two elements, one job: a fixed frame the size of the box, and a rail
+           of faces inside it that slides left as it outgrows the frame. */
+        <div className="scorer-roll__track" ref={viewport}>
+          <div className="scorer-roll__rail" ref={rail}>
+            {scorers.slice(0, shown).map(id => {
+              const player = roster.get(id);
+              // A scorer the roster no longer has — they quit between answering
+              // and the reveal. They earned it, so the tile keeps its place in
+              // the row; only the name is gone.
+              return (
+                <div key={id} className="scorer-roll__tile">
+                  {player ? (
+                    <Avatar avatar={player.avatar} size={56} seed={player.id} offline={!player.connected} />
+                  ) : (
+                    <div className="scorer-roll__ghost" aria-hidden="true" />
+                  )}
+                  <span className="scorer-roll__name">{player?.name ?? 'Gone'}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

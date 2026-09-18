@@ -4,8 +4,8 @@ import {
   Countdown,
   GameRules,
   LockedInCount,
-  MediaStrip,
   OptionGrid,
+  QuestionMedia,
   RULES_STEP,
   ScorerRoll,
 } from '../quizkit';
@@ -136,7 +136,10 @@ export default function PopularityDisplay({ state, players, deadline }: DisplayP
           />
         ) : (
           <>
-            <MediaStrip media={item.media} />
+            {/* The chart replaces the whole middle band on the reveal, so this
+                format needs no rule about hiding the picture — the branch it is
+                inside is already the one that isn't a reveal. */}
+            <QuestionMedia media={item.media} />
             {/* No `correct` prop, ever. This is the one format where the item on
                 disk has no answer on it — the room is about to be the answer —
                 so there is nothing for the grid to turn green. */}

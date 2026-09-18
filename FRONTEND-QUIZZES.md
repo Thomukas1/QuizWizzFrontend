@@ -191,7 +191,7 @@ and only quizzes want them.
 |---|---|---|
 | `<OptionButtons>` | Phone. 2–4 tap targets, letter + label | Use `MIN_OPTIONS`/`MAX_OPTIONS` from the copied `view.ts` |
 | `<OptionGrid>` | TV. The same letters, large | Same order as the phone, always |
-| `<MediaStrip>` | `item.media`, 0–2 | Empty on every item today — build the slot |
+| `<QuestionMedia>` | TV. `item.media[0]`, when there is one | Dropped on the reveal — see below |
 | `<AnsweredTiles>` | TV. A tile per player, lit on submit | Maps `answered` ids against the roster |
 | `<LockedInCount>` | "12 / 15 locked in" | See the rule below |
 | `<RevealBars>` | The per-option split | `counts` has every key, zeroes included |
@@ -213,17 +213,41 @@ pockets.
 Same reasoning as `ReactionOption` in `protocol.ts`: the rule for what the
 server does lives on the server, and the client is told the answer.
 
-### Media, and what it will eventually be
+### Media — a picture in the question, a picture in the answer
 
-`media` is `[{ kind: 'image'; url; alt? }]`, capped at two, and **empty on every
-item today** — nothing hosts the bytes yet. Build the slot now so images are a
-content change rather than a refactor.
+`media` is `[{ kind: 'image'; url; alt? }]` on the item and `explainMedia` is one
+of the same on the reveal. Both are hosted on Arweave and both render through
+`primitives/Img.tsx` → `hooks/arweave/` → `src/services/arweave/`, never a raw
+`<img src>`: a stored Arweave url names one gateway, and betting a round on that
+host being up is a blank screen in front of fifteen people.
 
-`src/services/arweave/` already solves gateway-failover loading and
-`primitives/Img.tsx` and `hooks/arweave/` sit on top of it. That is almost
-certainly where this lands: a stored Arweave url names one gateway, and a bare
-`<img src>` on it bets the round on that host being up. `<MediaStrip>` should go
-through `useArweaveImage` rather than a raw `src` for exactly that reason.
+**`<QuestionMedia>` takes `media[0]` and nothing else.** The wire type is a list
+and `MAX_MEDIA_PER_ITEM` still allows two, but a pair to compare is a layout with
+its own answer to "how big is each of these" and no item ships one. The branch
+belongs in that component on the day one does.
+
+**Both wear `.quiz-media`, which hugs the picture.** Content images are portrait,
+landscape and square in the same round, so the frame is sized by the image rather
+than cropping it into a fixed ratio — only the ceiling differs, as
+`--quiz-media-cap`.
+
+**The reveal is a trade, and the TV cannot show both pictures.** On the standard
+quiz screen:
+
+| Reveal has | Question picture | Options |
+|---|---|---|
+| nothing, or a sentence | dropped | all four, the winner green |
+| an `explainMedia` | dropped | **only the winner** (`correctOnly`) |
+
+The question's picture has done its job by the time the answer lands, and what
+arrives in its place — a row of faces, and sometimes a second picture — is what
+the room is looking at. Dropping it is what pays for them.
+
+The layout that goes with a question picture — picture up under the clock,
+smaller options along the bottom — is `:has(.question-media)` in
+`styles/components/quiz-kit.css`, not a prop. `<QuestionMedia>` renders nothing
+on a text-only item, so the band is a fact of what is on screen rather than a
+flag three formats have to pass in step.
 
 ---
 

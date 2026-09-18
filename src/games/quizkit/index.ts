@@ -26,7 +26,7 @@ export { GameRules, RULES_STEP } from './GameRules';
 export { Countdown, COUNTDOWN_STEP } from './Countdown';
 export { OptionButtons } from './OptionButtons';
 export { OptionGrid } from './OptionGrid';
-export { MediaStrip } from './MediaStrip';
+export { QuestionMedia } from './QuestionMedia';
 export { ExplainNote } from './ExplainNote';
 export { LockedInCount } from './LockedInCount';
 export { ScorerRoll } from './ScorerRoll';

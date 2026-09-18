@@ -49,7 +49,7 @@ import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwi
  * `revealStepMs`.
  */
 const PLAYLIST: { gameId: string; title: string; config?: Record<string, unknown> }[] = [
-  // { gameId: 'quiz-warmup', title: 'Warmup' },
+  { gameId: 'quiz-warmup', title: 'Warmup' },
   /**
    * **Two Match-3 rounds, and the `content` id is the only thing that differs.**
    * The format is written to be run more than once an evening — the barrage is

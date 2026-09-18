@@ -5,8 +5,8 @@ import {
   ExplainNote,
   GameRules,
   LockedInCount,
-  MediaStrip,
   OptionGrid,
+  QuestionMedia,
   RULES_STEP,
 } from '../quizkit';
 import type { DisplayProps } from '../registry';
@@ -122,11 +122,20 @@ export default function SpeedrunDisplay({ state, players, deadline }: DisplayPro
       </header>
 
       <div className="quiz-display__main">
-        <MediaStrip media={item.media} />
+        {/* Gone once the answer lands, same as the warmup: the picture has done
+            its job by then, and on this format the ring is already queued up
+            behind it. */}
+        {!reveal && <QuestionMedia media={item.media} />}
+
         {/* `reveal` is null until the `answer` step, so the green is a fact of
             the frame rather than something this component has to be trusted to
-            withhold. */}
-        <OptionGrid options={item.options} correct={reveal?.correct ?? null} />
+            withhold. `correctOnly` on the items whose explanation is a picture
+            — it is the beat, and it wants the room. */}
+        <OptionGrid
+          options={item.options}
+          correct={reveal?.correct ?? null}
+          correctOnly={!!reveal?.explainMedia}
+        />
 
         {/* Only ever seen on `answer`: the ring takes the whole screen from
             `crowd` on, so the branch above has already returned by the time

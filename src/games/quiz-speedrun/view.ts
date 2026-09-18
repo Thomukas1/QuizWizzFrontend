@@ -14,13 +14,22 @@ import { QuizCounts, QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../qui
 
 /**
  * ```
- * intro   3s     prompt on the TV, buttons dead — the anti-twitch beat
- * open    30s    buttons live, auto-locks once everyone is in
- * locked  ~1s    buttons dead, drumroll
- * answer  host   the correct option, and the bars
- * crowd   host   everyone who got it right, all at once
- * podium  host   every paying place at once, with its time
+ * rules      host   how this format works, read out — once, before the game
+ * countdown  3s     the running start
+ * ---- then per item ----
+ * intro      3s     prompt on the TV, buttons dead — the anti-twitch beat
+ * open       30s    buttons live, auto-locks once everyone is in
+ * locked     ~1s    buttons dead, drumroll
+ * answer     host   the correct option, and the bars
+ * crowd      host   everyone who got it right, all at once
+ * podium     host   every paying place at once, with its time
  * ```
+ *
+ * **The first two run once, before any item**, and every format has them — the
+ * `opening` stage of the plan, so no item is up on either. They matter more here
+ * than anywhere: "only the three fastest score" is a rule a room has to be told
+ * before it is played on them, and a countdown off the card means the first
+ * question isn't won by whoever happened to be looking at the screen.
  *
  * **One podium step, not one per place.** It used to be `winners` steps counting
  * down to 1st, and the suspense it was buying did not exist: every place pays the
@@ -31,7 +40,15 @@ import { QuizCounts, QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../qui
  * The step is skipped entirely when nobody was right, which is why the reveal can
  * end on the crowd saying "Nobody".
  */
-export type SpeedrunStep = 'intro' | 'open' | 'locked' | 'answer' | 'crowd' | 'podium';
+export type SpeedrunStep =
+    | 'rules'
+    | 'countdown'
+    | 'intro'
+    | 'open'
+    | 'locked'
+    | 'answer'
+    | 'crowd'
+    | 'podium';
 
 /** One paying place, once the television has put it on screen. */
 export interface SpeedrunPlace {

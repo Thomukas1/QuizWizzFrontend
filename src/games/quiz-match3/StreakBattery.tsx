@@ -10,13 +10,14 @@ import type { Match3Beat } from './view';
  * personal. The television deliberately shows no streaks at all — it shows the
  * people who just banked one, flying up it — so this is the only place a streak
  * is drawn, and it is **current**: the cell fills on the tap, which is the point
- * of it. It runs up to eight seconds ahead of anything the room sees, and that
- * is the design rather than a drift to reconcile.
+ * of it. It runs up to ten seconds ahead of anything the room sees, until the
+ * hold, where the room catches up. That gap is the design rather than a drift to
+ * reconcile.
  *
  * A battery rather than a row of dots because a battery already means what this
  * needs to mean. Three lit dots is a score. Three of three cells full is a thing
  * about to happen — you can see how close it is without reading it, which is the
- * entire job at eight seconds an item with a thumb over the buttons.
+ * entire job at ten seconds an item with a thumb over the buttons.
  *
  * ## The full pack is an animation, never a state
  *

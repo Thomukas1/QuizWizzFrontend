@@ -148,6 +148,121 @@
   color: var(--text-soft);
 }
 
+/* ── The opening: a card, then 3 · 2 · 1 ────────────────────────────────────
+   Every format opens the same way — a held frame naming it and explaining it,
+   then three seconds of starting gun, then the first question. Match-3 had both
+   first and they were written in its own file; they are here because the shape
+   turned out to belong to the kit rather than to the barrage, and only the words
+   inside are a format's own.
+
+   The kit's three bands are overridden into a centred column for both: neither
+   card has a top or a bottom. They are a held frame with one thing in the
+   middle, read out loud to a room. */
+
+.quiz-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(var(--space-2xl), 5vh, var(--space-4xl));
+  text-align: center;
+}
+
+/* The format's name, in the display face — the same treatment the game zone's
+   own title gets, because it is the same object: a round announcing itself. */
+.quiz-card__title {
+  font-family: var(--font-display);
+  font-size: clamp(var(--font-size-2xl), 3.4vw, 64px);
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* **The rules, in the format's own words.** A column rather than a single
+   element, so a game with two sentences to say gets two paragraphs and the
+   sizing still comes from here.
+
+   Capped at 24ch and balanced: this is read aloud at three metres, and a rule
+   that ragged across the full width of a television stops being one sentence. */
+.quiz-card__rules {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--space-md), 2vh, var(--space-2xl));
+  max-width: 24ch;
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-xl), 2.4vw, 46px);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.3;
+  text-wrap: balance;
+  color: var(--text-soft);
+}
+
+/* A label over the thing it labels, because "Topic: Before or after 2014?" on
+   one line makes the label part of the sentence. */
+.quiz-card__billing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(var(--space-sm), 1.4vh, var(--space-lg));
+}
+
+.quiz-card__label {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-base), 1.3vw, 26px);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  color: var(--text-muted);
+}
+
+/* What the round is about, asked once. The biggest thing on the television for
+   as long as the host holds the card, because every item after it is an
+   instance of it. */
+.quiz-card__subject {
+  font-family: var(--font-accent);
+  font-size: clamp(var(--font-size-2xl), 4.4vw, 84px);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  text-wrap: balance;
+  color: var(--text-primary);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+
+/* The digit wants the room, so the gap between the label and it closes up. */
+.quiz-card--countdown {
+  gap: clamp(var(--space-lg), 3vh, var(--space-2xl));
+}
+
+/* A running start, because dropping a room straight from a card it read at its
+   own pace into a live question wastes the first one. The digit is remounted
+   per second by the component, so this runs once each time rather than
+   looping. */
+.quiz-countdown {
+  font-family: var(--font-display);
+  font-size: clamp(80px, 18vh, 220px);
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(182, 248, 51, 0.35);
+  animation: quiz-countdown-tick 900ms cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+@keyframes quiz-countdown-tick {
+  0%   { transform: scale(1.5); opacity: 0; }
+  18%  { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(0.94); opacity: 0.85; }
+}
+
+/* The number is still the number without the pop, and the step's own deadline
+   is what ends it either way. */
+@media (prefers-reduced-motion: reduce) {
+  .quiz-countdown {
+    animation: none;
+  }
+}
+
 /* ── Option grid ────────────────────────────────────────────────────────────
    The same letters as the phone, in the same order. The letter is the only
    thing tying a button in a hand to a line on the screen. */

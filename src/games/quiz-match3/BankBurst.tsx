@@ -16,9 +16,16 @@ import type { PublicPlayer } from '../../services/quizwizz';
  * payout: **five faces the size of a fist, all at once, gone in a second.**
  *
  * The point is the wanting. Somebody who has not banked yet watches three people
- * they know fly up the screen with a `+1` on them, and the next item is already
- * running — which is the whole trick, because the only thing to do about it is
- * answer the one in front of them.
+ * they know fly up the screen with a `+1` on them.
+ *
+ * **This used to fire over a live item**, and the note here used to say that not
+ * being allowed to stop and admire it was the whole trick. It now lands on the
+ * `hold`, with the answer and with the tiles emptying underneath it, and five
+ * seconds of stopping to admire it turned out to be better: it is the one moment
+ * in a round of twenty where a particular person is looked at, and the old
+ * version spent it competing with the next question. Nothing in this file changed
+ * to move it — the burst fires on `settledIndex`, and `settledIndex` is what
+ * moved.
  *
  * ## It is not in the game zone
  *
@@ -37,10 +44,10 @@ import type { PublicPlayer } from '../../services/quizwizz';
  * ## Once per beat, and only for beats we were here for
  *
  * `settledIndex` is the sequence. Frames are pushed on every submission, so
- * during one eight-second item this component is handed the same `banked` array
- * a dozen times; spawning on "the array is non-empty" would fire that burst a
- * dozen times, which is the bug `<CrowdCircle>` solved with `crowdKey` and the
- * one the contract's own note warns about.
+ * during one item this component is handed the same `banked` array a dozen
+ * times; spawning on "the array is non-empty" would fire that burst a dozen
+ * times, which is the bug `<CrowdCircle>` solved with `crowdKey` and the one the
+ * contract's own note warns about.
  *
  * The first `settledIndex` a mount sees is **skipped**, for `<CrowdCircle>`'s
  * `joinedLate` reason: a television that reconnects mid-barrage is handed the

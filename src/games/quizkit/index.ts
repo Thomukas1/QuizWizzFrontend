@@ -8,12 +8,22 @@
  * precisely because it does *not* know what a question is. The server draws the
  * same line and calls it **kits and tools**.
  *
+ * **`<GameRules>` and `<Countdown>` are the opening pair**, in that order: a
+ * held card naming the format and explaining it, then three seconds of starting
+ * gun, then the first question. The shell is shared and the words are not — each
+ * game writes its own rules as children, because half of what a rules card says
+ * is a number off its own frame and the other half is a voice no two formats
+ * share. See the `RULES_STEP` / `COUNTDOWN_STEP` ids in those two files for the
+ * step a format declares to get them.
+ *
  * `view.ts` is copied verbatim from `rubian-server/src/quiz-wizz/Games/quizkit/`
  * and must never be edited here — it is the contract for the shape of
  * `view.state`, and the server's copy is the authority.
  *
  * Import through this barrel, never the file.
  */
+export { GameRules, RULES_STEP } from './GameRules';
+export { Countdown, COUNTDOWN_STEP } from './Countdown';
 export { OptionButtons } from './OptionButtons';
 export { OptionGrid } from './OptionGrid';
 export { MediaStrip } from './MediaStrip';

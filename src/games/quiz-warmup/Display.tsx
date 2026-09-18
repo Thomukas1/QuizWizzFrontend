@@ -1,5 +1,14 @@
 import { Timer } from '../../components/Timer';
-import { LockedInCount, MediaStrip, OptionGrid, ScorerRoll } from '../quizkit';
+import {
+  COUNTDOWN_STEP,
+  Countdown,
+  GameRules,
+  LockedInCount,
+  MediaStrip,
+  OptionGrid,
+  RULES_STEP,
+  ScorerRoll,
+} from '../quizkit';
 import type { DisplayProps } from '../registry';
 import type { WarmupDisplayView } from './view';
 
@@ -25,6 +34,32 @@ export default function WarmupDisplay({ state, players, deadline }: DisplayProps
   // neither — but Match-3 does, and this component should not be the thing that
   // finds that out in front of a room.
   const counter = itemIndex >= 0 ? `${itemIndex + 1} / ${itemCount}` : null;
+
+  /**
+   * **The opening pair, and the format's own words in the kit's card.**
+   *
+   * The warmup's rules are the shortest in the set on purpose: it is the round
+   * that teaches the rhythm, and everything it says here is something the next
+   * three formats will break. Nothing is computed — no number on this screen
+   * comes off the frame, because the warmup pays a flat point and says so.
+   *
+   * These two steps are **not in the server's plan yet** — `WarmupStep` has no
+   * `rules` and no `countdown`, which is why the ids are compared against the
+   * kit's widened constants rather than literals. Declare them as `opening`
+   * steps in the server module and this lights up with nothing else to change.
+   */
+  if (step === RULES_STEP) {
+    return (
+      <GameRules title="Warmup">
+        <p>Four answers. One of them is right.</p>
+        <p>Everyone gets the same clock, and being quick about it buys you nothing.</p>
+      </GameRules>
+    );
+  }
+
+  if (step === COUNTDOWN_STEP) {
+    return <Countdown deadline={deadline} />;
+  }
 
   // The gap between entering GAME and the first item, and the beat after the
   // last one. A blank television mid-party reads as broken to fifteen people at

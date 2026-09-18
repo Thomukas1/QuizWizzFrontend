@@ -53,6 +53,18 @@ export interface GameComponents {
   Display: LazyExoticComponent<ComponentType<DisplayProps<never>>> | ComponentType<DisplayProps<never>>;
   /** What the phone shows. */
   Player: LazyExoticComponent<ComponentType<PlayerProps<never>>> | ComponentType<PlayerProps<never>>;
+  /**
+   * **The round's own sky.** Painted behind the whole game zone on the
+   * television — behind the rules card, the countdown, the questions and the
+   * reveal alike — for as long as the module owns `GAME`.
+   *
+   * Optional, and takes no props on purpose: it is atmosphere, not a view of the
+   * frame. A backdrop that wanted `state` would be a thing the room has to read,
+   * and that belongs in `Display` where the eye is already pointed. Omit it and
+   * the round plays over the app's diagonal stripes, which is what the lobby,
+   * the results and the podium keep.
+   */
+  Backdrop?: LazyExoticComponent<ComponentType> | ComponentType;
 }
 
 /**
@@ -62,8 +74,9 @@ export interface GameComponents {
  *
  * ```ts
  * 'quiz-deathmatch': {
- *   Display: lazy(() => import('./quiz-deathmatch/Display')),
- *   Player:  lazy(() => import('./quiz-deathmatch/Player')),
+ *   Display:  lazy(() => import('./quiz-deathmatch/Display')),
+ *   Player:   lazy(() => import('./quiz-deathmatch/Player')),
+ *   Backdrop: lazy(() => import('./quiz-deathmatch/Backdrop')),  // optional
  * },
  * ```
  */
@@ -71,18 +84,22 @@ export const GAMES: Record<string, GameComponents> = {
   'quiz-warmup': {
     Display: lazy(() => import('./quiz-warmup/Display')),
     Player: lazy(() => import('./quiz-warmup/Player')),
+    Backdrop: lazy(() => import('./quiz-warmup/Backdrop')),
   },
   'quiz-speedrun': {
     Display: lazy(() => import('./quiz-speedrun/Display')),
     Player: lazy(() => import('./quiz-speedrun/Player')),
+    Backdrop: lazy(() => import('./quiz-speedrun/Backdrop')),
   },
   'quiz-match3': {
     Display: lazy(() => import('./quiz-match3/Display')),
     Player: lazy(() => import('./quiz-match3/Player')),
+    Backdrop: lazy(() => import('./quiz-match3/Backdrop')),
   },
   'quiz-popularity': {
     Display: lazy(() => import('./quiz-popularity/Display')),
     Player: lazy(() => import('./quiz-popularity/Player')),
+    Backdrop: lazy(() => import('./quiz-popularity/Backdrop')),
   },
 };
 

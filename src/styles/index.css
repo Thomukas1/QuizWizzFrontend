@@ -42,8 +42,10 @@
 @import './components/avatar-slider.css';
 
 /* QuizWizz — games. The round formats: one stylesheet for the shared quiz kit,
-   and one per format that needs a screen the kit doesn't already draw. */
+   one for the skies the formats play under, and one per format that needs a
+   screen the kit doesn't already draw. */
 @import './components/quiz-kit.css';
+@import './components/game-backdrop.css';
 @import './components/speedrun.css';
 @import './components/match3.css';
 @import './components/popularity.css';

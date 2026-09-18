@@ -27,6 +27,33 @@
   scrollbar-color: var(--border-color) transparent;
 }
 
+/* ── The loop ───────────────────────────────────────────────────────────────
+   **The list is rendered twice and the scroll wraps by exactly one copy**, so
+   the seam is invisible and first place gets the same seconds on screen as
+   anybody else — rewinding to the top gave the leader the one instant the
+   rewind landed on. The break line is what stops the carousel reading as a
+   roster with everyone in it twice; see `<Leaderboard autoScroll>`. */
+
+.leaderboard--looping {
+  /* A thumb parked half way down a list that never ends is telling the room
+     something untrue, and the animation owns this scroll anyway. */
+  scrollbar-width: none;
+}
+
+.leaderboard--looping::-webkit-scrollbar {
+  display: none;
+}
+
+/* "That was everybody." A hairline and nothing else: it is a punctuation mark
+   between laps, not a row, and anything with weight to it would be read from
+   three metres as a player. */
+.leaderboard__wrap {
+  flex: none;
+  height: 0;
+  margin: var(--space-xs) var(--space-md);
+  border-top: 1px dashed var(--border-color);
+}
+
 /* Three columns, and the third one gets everything that is left.
 
    The name is the thing that has to fit, so every other cell is measured in

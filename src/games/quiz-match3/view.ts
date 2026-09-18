@@ -7,10 +7,9 @@
  *
  * The other two formats build a reveal that fills in one step at a time, and what
  * is absent from it is absent because the television has not shown it yet. This
- * format has no reveal at all: there is no time for one at eight seconds an item,
- * and a per-item verdict card would compete with the only thing worth looking at.
- * **`rows` is the whole format's feedback**, on screen continuously, and a client
- * that renders it renders the game.
+ * format's is **one screen held for five seconds** — `hold`, below — and it
+ * follows the same rule for the same reason: the correct answer is not on the
+ * frame at all until the buttons are dead.
  */
 import { QuizDisplayBase, QuizOption, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
 
@@ -18,17 +17,23 @@ import { QuizDisplayBase, QuizOption, QuizOutcome, QuizPlayerBase } from '../qui
  * ```
  * topic      host   the topic card and the two labels — the host starts the barrage
  * countdown  3s     3 · 2 · 1, because this one needs a running start
- * open       8s     × 20, auto-advancing, no intro and no reveal between them
- * summary    host   banks and best runs, once the barrage is over
+ * open       10s    the answer window, buttons live
+ * hold       5s     the correct answer, and everything that answer just did
+ * summary    2.5s   the last flyup gets off the screen, then the game settles
  * ```
  *
  * `topic` and `summary` are the format's one opening and one closing step;
- * `open` is the only per-item step there is. **No `intro` and no `locked`**: the
- * anti-twitch beat the other formats put in front of every question is the thing
- * this format is deliberately without, and a one-second drumroll twenty times
- * would be twenty seconds of a game that is meant to feel like a barrage.
+ * `open` and `hold` are the per-item pair. **Still no `intro` and no `locked`**:
+ * the anti-twitch beat the other formats put in front of every question is the
+ * thing this format is deliberately without, and a one-second drumroll twenty
+ * times would be twenty seconds of a game that is meant to move.
+ *
+ * `hold` is the exception to that, and it is not a drumroll — it is the payoff.
+ * At ten seconds flat the room never got to hear what the answer *was*, so
+ * twenty items went past and nothing stuck. It is also the only place the streak
+ * arithmetic can land: see `settledIndex`.
  */
-export type Match3Step = 'topic' | 'countdown' | 'open' | 'summary';
+export type Match3Step = 'topic' | 'countdown' | 'open' | 'hold' | 'summary';
 
 /**
  * What one item did to one player's streak — the animation the tile plays.
@@ -74,6 +79,26 @@ export interface Match3Row {
     last: Match3Beat | null;
 }
 
+/**
+ * **The answer, and it is null until the `hold` step.**
+ *
+ * Absent rather than zeroed or flagged, which is the same bargain every other
+ * format's reveal makes: `displayBase` strips `correct` and `explain` off the
+ * item on every frame, so a television that is not on the hold has no answer in
+ * its payload to be trusted with. The one on the hold has this instead.
+ *
+ * Two fields and no counts. The other formats ship how the room split, because
+ * their reveals have the screen space and the seconds to draw bars with; five
+ * seconds and two options does not — "it was the left one, and here is why" is
+ * the whole of what there is time to say.
+ */
+export interface Match3Hold {
+    /** The winning option key — always `A` or `B`, by the format's contract. */
+    correct: string;
+    /** The item's sentence, read out under it. Null for most items, and that is fine. */
+    explain: string | null;
+}
+
 export interface Match3DisplayView extends QuizDisplayBase {
     step: Match3Step;
     /** The round's question, asked once — "Before or after 2014?". The content's title. */
@@ -108,18 +133,22 @@ export interface Match3DisplayView extends QuizDisplayBase {
      */
     pointsPerStreak: number;
     /**
-     * Every player's streak, as of **the last item that has closed** — never the
-     * one on screen.
+     * Every player's streak, as of **the last item whose `open` closed** — never
+     * the one still being answered.
      *
-     * That lag is deliberate and it is the format's only secret. A grid that
-     * updated on submit would light a pip the instant someone answered, which
-     * reveals per-item correctness on the television to a room still answering
-     * it. Phones get their own result immediately; the room gets it on the beat.
+     * That lag is deliberate. A grid that updated on submit would light a pip the
+     * instant someone answered, which reveals per-item correctness on the
+     * television to a room still answering it. Phones get their own result
+     * immediately; the room gets it on the beat.
+     *
+     * **The beat is the `hold`**, which is what that step bought: this used to run
+     * a whole item behind, so the feedback for item 7 arrived underneath item 8.
+     * Now it turns over as the answer goes up, about the item everyone is still
+     * looking at.
      */
     rows: Match3Row[];
     /**
-     * **Who banked a point on the item that just closed** — the `+1` flyup, and
-     * the one interruption a format with no reveal step gets.
+     * **Who banked a point on the item that just closed** — the `+1` flyup.
      *
      * Its own list rather than a filter the client runs over `rows`, for the
      * reason the whole grid is server-computed: banking is the rule the game *is*,
@@ -127,22 +156,30 @@ export interface Match3DisplayView extends QuizDisplayBase {
      * twice. Empty on most items, and empty on every frame before the first one
      * closes. The avatars are the client's — this is ids, like `answered`.
      *
-     * Pop them up over the barrage without pausing it. The next item is already
-     * running, which is exactly the feeling: somebody scores and the room does
-     * not get to stop and admire it.
+     * It lands on the `hold`, with `this.hold` and with `rows`, because the three
+     * of them are one event: here is what it was, here is who got it, here is what
+     * that did to them. It used to fire over a live item on the theory that not
+     * being allowed to stop and admire it was the feeling; five seconds of
+     * stopping to admire it turned out to be better, and it is the one moment in
+     * the round where a player is looked at.
      */
     banked: string[];
     /**
-     * **The index of the item `rows` and `banked` describe**, or -1 before the
-     * first one closes.
+     * **The index of the item `rows`, `banked` and `hold` describe**, or -1 before
+     * the first one closes.
      *
      * Here so the flyup fires once. Frames are whole and pushed on every
      * submission, so during one eight-second item a client sees the same `banked`
      * array a dozen times; an animation triggered on "the array is non-empty"
      * fires a dozen times with it. Key it on this number instead — it changes
-     * exactly when the beat does.
+     * exactly when the beat does, which is now the `open` → `hold` boundary.
      */
     settledIndex: number;
+    /**
+     * **The answer, on the `hold` step and nowhere else.** Null on every other
+     * frame. See `Match3Hold`.
+     */
+    hold: Match3Hold | null;
 }
 
 export interface Match3PlayerView extends QuizPlayerBase {
@@ -162,17 +199,20 @@ export interface Match3PlayerView extends QuizPlayerBase {
      * next item. `missed` never appears — an item nobody answered is over before
      * the frame that could carry it.
      *
-     * Flash it and move on. Two hundred milliseconds, no text, no delay: at eight
-     * seconds an item, anything slower makes the next one feel like an ambush.
+     * Flash it and move on. Two hundred milliseconds, no text, no delay — and
+     * **do not draw it again on the `hold`**. They knew ten seconds ago, and a
+     * phone lighting up a second time pulls fifteen faces down at the one moment
+     * the format wants them up.
      */
     outcome: QuizOutcome | null;
     /**
      * Their pips, **including the item they have just answered**.
      *
-     * Ahead of the television's copy of the same number by up to eight seconds,
-     * and that is the design: the pip moving *is* the reward for answering, and
-     * withholding it until the room finds out would leave the phone flashing
-     * green at nothing. The two agree again the moment the item closes.
+     * Ahead of the television's copy of the same number for the rest of the
+     * `open` step, and that is the design: the pip moving *is* the reward for
+     * answering, and withholding it until the room finds out would leave the
+     * phone flashing green at nothing. The two agree on the `hold`, which is
+     * where the television catches up.
      */
     streak: number;
     banks: number;

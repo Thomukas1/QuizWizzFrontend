@@ -1,0 +1,478 @@
+/* ============================================================
+   Game backdrops — the round's own sky
+   ============================================================
+   One block per format, painted behind the whole game zone for as long as that
+   module owns `GAME`. The engine's own screens — lobby, results, podium — keep
+   the app's diagonal stripes, so the background changing *is* the signal that a
+   round has started, and changing back is the signal that it is over.
+
+   **Atmosphere, never information.** Nothing in here is driven by the frame.
+   The room reads the question, the clock and the faces; this is only the light
+   they are read in, and it has to stay quiet enough that they still win.
+
+   **`transform` and `opacity` only, and as few elements as the effect allows.**
+   These run for the entire length of a round, on a laptop also holding a
+   websocket open, under everything else the screen is already animating. A
+   gradient that can live on a pseudo-element costs one paint; the same thing
+   built from eighty divs costs eighty. */
+
+/* Sits inside `.game-zone__backdrop`, which is already absolute, full-bleed and
+   pointer-event-free. The fill here is its own so a backdrop can also be dropped
+   into any other positioned box later without inheriting that one's rules. */
+.game-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Warmup — dawn
+   ============================================================
+   The round that teaches the rhythm, so its sky is the one that does the least:
+   a warm band across the top, a slow dot grid, and a few motes falling through
+   it. Every twist in the three formats after this lands harder because the first
+   one had none — the structure is deliberately the dullest in the set, and the
+   colour is the only thing doing any work.
+
+   **It is warm on purpose, and that is the whole point of it.** The evening runs
+   dawn → deep space → whatever the last two become, so the first round has to be
+   the one the room is not going to mistake for any of the others. Cold blue here
+   made it a slightly nicer version of the lobby; a horizon makes it a place.
+
+   `THEME.md` reserves amber and coral for warning and error, and this spends
+   both. It is the one deliberate exception in the app: at a fifth strength,
+   across the top of one zone, neither reads as a state — there is no amber
+   *element* here, only a time of day. Every meaning-bearing use of those two
+   colours is a lit chip or a 2px border on an opaque panel, and those still win
+   against this by an order of magnitude. If that stops being true, this is the
+   thing that moves, not the toast. */
+
+.game-backdrop--warmup {
+  /* **The two values that are the hue.** Change these and the whole round
+     changes climate without a single other line moving — steel and blue for a
+     cold dawn, sage and lime-2 for a green one. Channel triplets rather than
+     tokens because they are used at an alpha, which is the same bargain every
+     `rgba()` in this stylesheet already makes: a retheme has to come back
+     through here. */
+  --warmup-sun: 245, 166, 35;  /* p-warning — the light itself */
+  --warmup-haze: 232, 52, 74;  /* p-error   — the band under it */
+
+  background:
+    /* The sun, sitting just off the top edge of the zone. Narrow, so it is a
+       source rather than a wash. */
+    radial-gradient(105% 62% at 50% -6%, rgba(var(--warmup-sun), 0.22) 0%, transparent 62%),
+    /* The haze it throws, wider and lower. This is the half that makes it read
+       as a horizon instead of a lamp someone left on. */
+    radial-gradient(150% 90% at 50% 2%, rgba(var(--warmup-haze), 0.18) 0%, transparent 70%),
+    /* And down into the dark, well before the options get there. Everything
+       below the halfway line is the app's own navy, which is what keeps the
+       option cards and the lime on the correct one reading exactly as they do
+       everywhere else. */
+    linear-gradient(180deg, var(--p-cobalt) 0%, var(--p-navy) 74%);
+}
+
+/* The grid. Deliberately at the edge of visible: it gives the zone a surface to
+   be a surface, and the moment anybody can describe it at three metres it has
+   become a thing on the screen rather than the screen.
+
+   Overhangs the top by exactly one tile and travels exactly one tile per cycle,
+   which is what makes the loop seamless and why the two 56px values have to stay
+   equal to each other. */
+.game-backdrop--warmup::before {
+  content: '';
+  position: absolute;
+  top: -56px;
+  left: 0;
+  right: 0;
+  height: calc(100% + 56px);
+  background-image: radial-gradient(circle, rgba(var(--warmup-sun), 0.16) 1.5px, transparent 1.6px);
+  background-size: 56px 56px;
+  will-change: transform;
+  animation: warmupGrid 16s linear infinite;
+}
+
+@keyframes warmupGrid {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 56px, 0); }
+}
+
+.warmup-motes {
+  position: absolute;
+  inset: 0;
+}
+
+/* The outer box falls at a constant rate and never turns. */
+.warmup-mote {
+  position: absolute;
+  top: 0;
+  display: block;
+  will-change: transform;
+  animation: warmupFall var(--fall) linear infinite;
+}
+
+/* The speck inside it sways on its own period, which is what stops twenty of
+   these reading as a single sheet coming down. A soft-edged radial fill rather
+   than a flat disc with a blur on it: same look, no filter, no extra layer. */
+.warmup-mote i {
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle, var(--tint) 0%, transparent 70%);
+  will-change: transform;
+  animation: warmupSway var(--sway) ease-in-out infinite alternate;
+}
+
+/* `transform` is named at the two ends only, so it interpolates across the whole
+   fall while the opacity stops in between fade the mote in and out. */
+@keyframes warmupFall {
+  0%   { transform: translate3d(0, -8vh, 0); opacity: 0; }
+  12%  { opacity: var(--peak); }
+  88%  { opacity: var(--peak); }
+  100% { transform: translate3d(var(--drift), 106vh, 0); opacity: 0; }
+}
+
+@keyframes warmupSway {
+  from { transform: translate3d(-9px, 0, 0); }
+  to   { transform: translate3d(9px, 0, 0); }
+}
+
+/* ============================================================
+   Speedrun — warp
+   ============================================================
+   Dark space with the stars pulled into lines. Being right stopped being enough
+   and the background is what says so before the first question does. */
+
+.game-backdrop--warp {
+  background: var(--p-navy);
+}
+
+/* Distant stars, and not one element spent on them. A dozen hand-placed dots in
+   a tile large enough that it only repeats a handful of times across the zone —
+   which is the number that matters: a small tile is a visible grid, and sixty
+   stars is a sky while five hundred is static. The positions inside it are
+   deliberately unevenly spread for the same reason, and the vignette on top puts
+   the outer copies in the dark anyway. */
+.game-backdrop--warp::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 11% 17%, rgba(211, 214, 215, 0.8), transparent 100%),
+    radial-gradient(1px 1px at 27% 61%, rgba(211, 214, 215, 0.55), transparent 100%),
+    radial-gradient(1.6px 1.6px at 44% 8%, rgba(211, 214, 215, 0.7), transparent 100%),
+    radial-gradient(1px 1px at 58% 78%, rgba(119, 147, 158, 0.7), transparent 100%),
+    radial-gradient(1.2px 1.2px at 71% 33%, rgba(211, 214, 215, 0.65), transparent 100%),
+    radial-gradient(1px 1px at 88% 52%, rgba(211, 214, 215, 0.5), transparent 100%),
+    radial-gradient(1.5px 1.5px at 8% 84%, rgba(193, 212, 156, 0.6), transparent 100%),
+    radial-gradient(1px 1px at 35% 41%, rgba(119, 147, 158, 0.6), transparent 100%),
+    radial-gradient(1.3px 1.3px at 63% 95%, rgba(211, 214, 215, 0.6), transparent 100%),
+    radial-gradient(1px 1px at 79% 12%, rgba(211, 214, 215, 0.45), transparent 100%),
+    radial-gradient(1.1px 1.1px at 95% 71%, rgba(119, 147, 158, 0.55), transparent 100%),
+    radial-gradient(1px 1px at 19% 46%, rgba(211, 214, 215, 0.4), transparent 100%);
+  /* Not a round fraction of either axis, so the horizontal and vertical repeats
+     don't land on top of each other and give the eye a lattice to find. */
+  background-size: 41% 59%;
+}
+
+/* **The round pool of light.** Brand blue in the middle of the zone and black in
+   the corners — which draws a circle without drawing one, and is the whole
+   reason this file exists for Speedrun rather than a flat colour: `<CrowdCircle>`
+   takes the entire screen on the reveal, and a ring of faces reads from three
+   metres when it is sitting in light and the edges of the television are not.
+
+   Under the streaks, on purpose. A vignette painted over them would smother the
+   streaks exactly where they are supposed to be brightest — on their way out. */
+.game-backdrop--warp::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(17, 60, 178, 0.32) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, transparent 32%, rgba(0, 0, 0, 0.5) 74%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+.warp-streaks {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* Born at the middle of the zone, thrown outward along its own angle. The origin
+   is the streak's near end, so `scaleX` stretches it away from the centre rather
+   than about its own middle — which is the difference between a star smearing
+   into a line and a dash getting longer.
+
+   The gradient runs transparent → tint, so the trailing end is the faint one and
+   the head is the bright one, in the direction of travel. */
+.warp-streak {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--len);
+  height: var(--thick);
+  margin-top: calc(var(--thick) / -2);
+  transform-origin: 0 50%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, var(--tint) 100%);
+  opacity: 0;
+  will-change: transform, opacity;
+  /* Ease-*in*: it leaves slowly and is gone quickly, which is acceleration. A
+     linear warp field reads as a screensaver. */
+  animation: warpFly var(--dur) cubic-bezier(0.45, 0, 0.9, 0.5) infinite;
+}
+
+@keyframes warpFly {
+  0%   { transform: rotate(var(--a)) translateX(var(--near)) scaleX(0.22); opacity: 0; }
+  14%  { opacity: var(--peak); }
+  72%  { opacity: var(--peak); }
+  100% { transform: rotate(var(--a)) translateX(var(--far)) scaleX(1.55); opacity: 0; }
+}
+
+/* ============================================================
+   Match-3 — charge
+   ============================================================
+   Twenty items, eight seconds each, nothing in between. The display itself holds
+   still through all of it on purpose, so this is the only part of the screen
+   allowed to be as fast as the format is. */
+
+.game-backdrop--match3 {
+  /* Amber, not lime, and that is not a choice about which yellow is nicer:
+     Match-3's own screen is already lime — the option keys, the streak battery,
+     every chip `<BankBurst>` throws up over the top of it. A lime field would
+     swallow the one colour this format uses to say that you scored. */
+  --m3-charge: 245, 166, 35; /* p-warning */
+
+  background:
+    /* Up from the floor, and in from both top corners. Three sources at the rim
+       and none in the middle, which leaves the band where the prompt and the two
+       option cards live as the calm part of a loud screen. */
+    radial-gradient(120% 95% at 50% 118%, rgba(var(--m3-charge), 0.30) 0%, transparent 62%),
+    radial-gradient(85% 68% at 8% 2%, rgba(var(--m3-charge), 0.24) 0%, transparent 62%),
+    radial-gradient(85% 68% at 92% 2%, rgba(var(--m3-charge), 0.24) 0%, transparent 62%),
+    linear-gradient(180deg, var(--p-navy) 0%, var(--p-cobalt) 100%);
+}
+
+/* The field breathing between strikes. One flat wash whose *opacity* moves —
+   the gradients above are a single paint and stay one, and the thing animating
+   is a composited layer with nothing in it but a colour. */
+.game-backdrop--match3::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(90% 80% at 50% 100%, rgba(var(--m3-charge), 0.16) 0%, transparent 70%);
+  animation: match3Charge 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes match3Charge {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+
+.match3-bolts {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* The wrapper is the bolt's slot on the screen and the only thing that
+   animates. Everything inside it is drawn once and never touched again. */
+.match3-bolt {
+  position: absolute;
+  top: 0;
+  display: block;
+  opacity: 0;
+  will-change: opacity;
+  animation: match3Strike var(--dur) linear infinite;
+}
+
+.match3-bolt svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The strokes are wider than the path's own box at the edges of the slot. */
+  overflow: visible;
+}
+
+.match3-bolt path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The slot is stretched to an arbitrary aspect, and without this the stroke is
+     stretched with it — a bolt in a narrow slot would come out as a ribbon. */
+  vector-effect: non-scaling-stroke;
+}
+
+/* Widest and dimmest first. The colour is in the spill and the brightness is in
+   the centre, which is the whole of why three strokes read as lightning and one
+   reads as a zigzag. */
+.match3-bolt__halo {
+  stroke: rgba(17, 60, 178, 0.5); /* p-blue */
+  stroke-width: 9;
+}
+
+.match3-bolt__spill {
+  stroke: rgba(211, 214, 215, 0.7); /* p-text */
+  stroke-width: 3.5;
+}
+
+.match3-bolt__core {
+  stroke: var(--white);
+  stroke-width: 1.4;
+}
+
+/* **A quarter of a second of light in six to thirteen seconds of dark.** The
+   double hit at 1.4%/2.0% is the whole character of it — a single clean fade is
+   a lamp being switched on. Each bolt carries its own `--dur` and a negative
+   delay, so six of them never land together twice and the room cannot learn the
+   pattern. */
+@keyframes match3Strike {
+  0%, 100% { opacity: 0; }
+  0.6%     { opacity: 1; }
+  1.4%     { opacity: 0.15; }
+  2.0%     { opacity: 0.95; }
+  2.6%     { opacity: 0.25; }
+  3.6%     { opacity: 0; }
+}
+
+/* The room lighting up from a strike that happened somewhere off the edge of the
+   television. Deliberately not synced to any of the six — a flash that always
+   arrives with a visible bolt is a flash you can predict. Kept low: this is the
+   one element here that covers the whole zone, and at full strength it would be
+   the screen blinking rather than the weather doing something. */
+.game-backdrop--match3::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(211, 214, 215, 0.14) 0%, transparent 70%);
+  opacity: 0;
+  animation: match3Flash 11s linear infinite;
+}
+
+@keyframes match3Flash {
+  0%, 100% { opacity: 0; }
+  1.2%     { opacity: 1; }
+  2.2%     { opacity: 0.1; }
+  3.0%     { opacity: 0.7; }
+  4.4%     { opacity: 0; }
+}
+
+/* ============================================================
+   Popularity — fruit
+   ============================================================
+   The most colourful background in the set and the quietest one, which is the
+   brief rather than a contradiction: every hue in the palette is in here and not
+   one of them is above 13%.
+
+   **This format tints its own interface**, which is why. `phase` swings the whole
+   display between lime for the honest question and amber for the guess, and that
+   swing is how a room notices it is being asked a different question with the
+   same four answers. Anything saturated back here is a third colour arguing with
+   those two. */
+
+.game-backdrop--popularity {
+  background:
+    radial-gradient(70% 55% at 18% 20%, rgba(232, 52, 74, 0.13) 0%, transparent 70%), /* raspberry */
+    radial-gradient(64% 50% at 84% 28%, rgba(245, 166, 35, 0.11) 0%, transparent 70%), /* apricot */
+    radial-gradient(76% 58% at 60% 92%, rgba(182, 248, 51, 0.09) 0%, transparent 70%), /* kiwi */
+    radial-gradient(58% 48% at 8% 88%, rgba(17, 60, 178, 0.38) 0%, transparent 70%), /* blueberry */
+    linear-gradient(200deg, var(--p-cobalt) 0%, var(--p-navy) 55%, var(--p-cobalt) 100%);
+}
+
+.pop-shapes {
+  position: absolute;
+  inset: 0;
+}
+
+/* The outer element drifts and the inner one turns, on unrelated periods, which
+   is what stops fifteen shapes reading as one sheet sliding about. */
+.pop-shape {
+  position: absolute;
+  display: block;
+  will-change: transform;
+  animation: popDrift var(--float) ease-in-out infinite alternate;
+}
+
+.pop-shape i {
+  display: block;
+  width: var(--w);
+  height: var(--h);
+  will-change: transform;
+  animation: popTurn var(--spin) linear infinite;
+}
+
+@keyframes popDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--dx), var(--dy), 0); }
+}
+
+@keyframes popTurn {
+  from { transform: rotate(var(--rot)); }
+  to   { transform: rotate(calc(var(--rot) + 360deg)); }
+}
+
+/* A soft-edged blob, and not one `filter: blur()` in the file. A radial gradient
+   fading to its own transparent is the same picture for the price of a normal
+   paint — fifteen blurred layers is the version that drops frames. */
+.pop-shape--disc i {
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle, rgba(var(--tint), var(--alpha)) 0%, rgba(var(--tint), 0) 70%);
+  /* Turning a radial gradient about its own centre is compositor work with
+     nothing to show for it, so the discs breathe instead. */
+  animation: popBreathe var(--spin) ease-in-out infinite alternate;
+}
+
+@keyframes popBreathe {
+  from { transform: scale(0.88); }
+  to   { transform: scale(1.14); }
+}
+
+/* The angular kinds keep a hard edge. At a twentieth alpha that is barely an
+   edge, and it is what stops the whole field reading as nothing but bubbles. */
+.pop-shape--pill i {
+  border-radius: 999px;
+  background: rgba(var(--tint), var(--alpha));
+}
+
+.pop-shape--squircle i {
+  border-radius: 34%;
+  background: rgba(var(--tint), var(--alpha));
+}
+
+.pop-shape--tri i {
+  clip-path: polygon(50% 4%, 96% 92%, 4% 92%);
+  background: rgba(var(--tint), var(--alpha));
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================
+   The colour survives and the motion does not. Every one of these was only ever
+   atmosphere, so there is nothing to fall back to: each round keeps the field
+   that makes it itself, standing still. Nothing on any of the four screens is
+   told to the room by a moving part.
+
+   **Match-3 loses its lightning entirely**, and that one is not a preference
+   being honoured — a repeating flash is the one thing in this app that could
+   actually hurt somebody. The amber field alone still reads as the fast round. */
+
+@media (prefers-reduced-motion: reduce) {
+  .game-backdrop--warmup::before,
+  .game-backdrop--match3::before,
+  .pop-shape,
+  .pop-shape i {
+    animation: none;
+  }
+
+  .warmup-motes,
+  .warp-streaks,
+  .match3-bolts,
+  .game-backdrop--match3::after {
+    display: none;
+  }
+}

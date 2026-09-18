@@ -13,8 +13,8 @@ import type { Match3PlayerView } from './view';
  * nothing done to it for the faster pace, because everything it holds is already
  * scoped by `itemId`: an item change clears a pending tap and a notice, and an
  * ack that arrives for the item before this one is ignored by the same guard
- * that has always ignored it. Rebuilding it for eight seconds would be
- * rebuilding it for the case it was written for.
+ * that has always ignored it. Rebuilding it for ten seconds would be rebuilding
+ * it for the case it was written for.
  *
  * Two things here are this format's own.
  *
@@ -27,17 +27,32 @@ import type { Match3PlayerView } from './view';
  *
  * It is a wash of colour over the whole strip and nothing else — no word, no
  * icon, no delay. Two hundred milliseconds, keyed on `itemIndex` so it resets
- * per item. Anything slower and the next item feels like an ambush, which at
- * eight seconds is not a figure of speech.
+ * per item. Anything slower and the next item feels like an ambush, which at ten
+ * seconds is not a figure of speech.
+ *
+ * ## It goes quiet on the hold, and that took no code
+ *
+ * The five seconds the television spends on the answer are five seconds this
+ * screen deliberately has nothing to say. They already know — they knew ten
+ * seconds ago, on the tap — and a phone lighting up a second time would pull
+ * fifteen faces down at the one moment in the round the format wants them up.
+ *
+ * Every piece of that falls out of what was already here. The buttons die
+ * because `open` is the server's word and the hold collects nothing. The flash
+ * does not re-fire because its effect is keyed on `[outcome, itemIndex]` and
+ * neither changes across the step boundary. The pack does not re-flare because
+ * its `key` is the item they answered, which is the same item. **Nothing was
+ * added to keep this screen still** — it was already built to move only when the
+ * item does.
  *
  * ## The pack
  *
  * `streak`, `banks` and `bestRun` are folded **one item further than the
- * television's** — theirs move when an item closes, these move on the tap. The
- * pack filling *is* the reward for answering, so withholding it until the room
- * finds out would leave the phone flashing green at nothing. Up to eight seconds
- * of disagreement with the grid on the wall is the design, not a bug to
- * reconcile; they agree again the moment the item closes.
+ * television's while a question is open** — theirs move when the answering
+ * closes, these move on the tap. The pack filling *is* the reward for answering,
+ * so withholding it until the room finds out would leave the phone flashing green
+ * at nothing. Ten seconds of disagreement with the room is the design, not a bug
+ * to reconcile, and the hold is where the two of them come back together.
  *
  * `yourScore` arrives already multiplied, like every other format's. Nothing
  * here counts anything.

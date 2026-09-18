@@ -1,5 +1,14 @@
 import { Timer } from '../../components/Timer';
-import { LockedInCount, MediaStrip, OptionGrid, ScorerRoll } from '../quizkit';
+import {
+  COUNTDOWN_STEP,
+  Countdown,
+  GameRules,
+  LockedInCount,
+  MediaStrip,
+  OptionGrid,
+  RULES_STEP,
+  ScorerRoll,
+} from '../quizkit';
 import type { DisplayProps } from '../registry';
 import { PopularityChart } from './PopularityChart';
 import type { PopularityDisplayView, PopularityPhase } from './view';
@@ -44,9 +53,37 @@ const ASK: Record<PopularityPhase, { kicker: string; hint: string }> = {
 };
 
 export default function PopularityDisplay({ state, players, deadline }: DisplayProps<PopularityDisplayView>) {
-  const { item, itemIndex, itemCount, answered, expected, open, phase, reveal } = state;
+  const { step, item, itemIndex, itemCount, answered, expected, open, phase, reveal } = state;
 
   const counter = itemIndex >= 0 ? `${itemIndex + 1} / ${itemCount}` : null;
+
+  /**
+   * **The opening pair, and this format cannot be played without it.**
+   *
+   * Every other rules card in the set is a courtesy — the room could work the
+   * format out from the first reveal. This one is load-bearing: the premise is
+   * that the same four options get asked about twice and only the second one
+   * pays, and somebody who has not been told that answers the prediction with
+   * their own opinion and never finds out why they scored nothing. `ASK` and the
+   * accent switch exist to carry that *during* the round; this is where it gets
+   * said in full, once, with no clock running.
+   *
+   * Neither step is in the server's plan yet: `PopularityStep` has no `rules`
+   * and no `countdown`, hence the kit's widened ids rather than literals.
+   */
+  if (step === RULES_STEP) {
+    return (
+      <GameRules title="Popularity">
+        <p>Two questions, the same four answers.</p>
+        <p>First: what do you actually think? That one is worth nothing.</p>
+        <p>Then: what did the room pick most? That is the one that pays.</p>
+      </GameRules>
+    );
+  }
+
+  if (step === COUNTDOWN_STEP) {
+    return <Countdown deadline={deadline} />;
+  }
 
   if (!item) {
     return (

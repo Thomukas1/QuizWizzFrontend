@@ -50,10 +50,25 @@ export function HostGameScene({
     );
   }
 
-  const { Display } = game;
+  const { Display, Backdrop } = game;
 
   return (
-    <GameZone feed={feed}>
+    <GameZone
+      feed={feed}
+      /* The round's own sky, for the whole of `GAME` — the rules card and the
+         countdown included, so the format has already changed the room's
+         background by the time it says its name. A game without one plays over
+         the app's diagonal stripes, which is what the lobby, the results and the
+         podium keep. Its own Suspense boundary: a backdrop still loading must
+         not hold up the question. */
+      backdrop={
+        Backdrop && (
+          <Suspense fallback={null}>
+            <Backdrop />
+          </Suspense>
+        )
+      }
+    >
       <Suspense fallback={<p className="subtle">Loading…</p>}>
         {/*
           The entire world a game can see. `deadline` comes off the frame rather

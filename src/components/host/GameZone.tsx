@@ -20,7 +20,7 @@ interface GameZoneProps {
   top?: ReactNode;
   /** The line below. Usually what the host should press next. */
   bottom?: ReactNode;
-  /** Painted behind everything, inside the zone — confetti, and nothing else yet. */
+  /** Painted behind everything, inside the zone — confetti, and a game's own sky. */
   backdrop?: ReactNode;
   /** Reactions, rising from the bottom edge of the zone across its full width. */
   feed?: EmojiFeed | null;
@@ -33,9 +33,13 @@ export function GameZone({ top, bottom, backdrop, feed, children }: GameZoneProp
       {/* Both layers sit behind the content and neither takes a pointer event.
           The emoji field belongs to the zone rather than to a scene, so it keeps
           running across a phase change — the room's reaction doesn't stop
-          because the screen moved on. */}
-      <EmojiStream feed={feed ?? null} variant="zone" />
+          because the screen moved on.
+
+          **Backdrop first.** Both sit at z-index 0, so paint order is DOM
+          order — and a game's sky rendered second would paint over the rising
+          emoji, which is the one layer in here the room actually sent. */}
       {backdrop && <div className="game-zone__backdrop">{backdrop}</div>}
+      <EmojiStream feed={feed ?? null} variant="zone" />
 
       <header className="game-zone__top">{top}</header>
       <div className="game-zone__stage">{children}</div>

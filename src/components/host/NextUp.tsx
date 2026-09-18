@@ -59,7 +59,7 @@ const PLAYLIST: { gameId: string; title: string; config?: Record<string, unknown
    * `FAST_CONFIG` — an entry's own config goes over the dev override, so this is
    * the key that always wins.
    */
-  { gameId: 'quiz-match3', title: 'Match-3', config: { content: 'match3-01' } },
+  // { gameId: 'quiz-match3', title: 'Match-3', config: { content: 'match3-01' } },
   /**
    * The recovery round, and the one to end on. It is the slowest format in the
    * set — two questions per item — so four to six items is a round, and the

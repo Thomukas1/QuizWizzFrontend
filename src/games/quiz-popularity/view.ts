@@ -17,6 +17,9 @@ import { QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
 
 /**
  * ```
+ * rules       host   how this format works, read out — once, before the game
+ * countdown   3s     the running start
+ * ---- then per item ----
  * intro       5s     the question on the TV, buttons dead
  * opinion     10s    "which do you actually think?" — auto-locks once everyone is in
  * switch      ~1.2s  buttons dead, the room is told the rules just changed
@@ -24,6 +27,12 @@ import { QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
  * bar1..bar4  ~1.8s  the chart, one bar per beat, lowest first
  * scorers     host   who called it, and the points
  * ```
+ *
+ * **The first two run once, before any item**, and every format has them — the
+ * `opening` stage of the plan, so no item is up on either and `phase` is null
+ * through both. This is the format that most needs the card: "answer honestly,
+ * then guess what everyone else said" is two rules and a trap, and a room that
+ * works it out during item one has played item one wrong.
  *
  * **The same four buttons twice inside a minute**, which is the trap the format
  * sets for itself: without a visible break people answer the second phase on
@@ -42,6 +51,8 @@ import { QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
  * suspense was about nothing. Here the order *is* the suspense.
  */
 export type PopularityStep =
+    | 'rules'
+    | 'countdown'
     | 'intro'
     | 'opinion'
     | 'switch'

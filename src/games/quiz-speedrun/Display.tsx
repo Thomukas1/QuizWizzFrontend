@@ -1,5 +1,13 @@
 import { Timer } from '../../components/Timer';
-import { LockedInCount, MediaStrip, OptionGrid } from '../quizkit';
+import {
+  COUNTDOWN_STEP,
+  Countdown,
+  GameRules,
+  LockedInCount,
+  MediaStrip,
+  OptionGrid,
+  RULES_STEP,
+} from '../quizkit';
 import type { DisplayProps } from '../registry';
 import { CrowdCircle } from './CrowdCircle';
 import type { SpeedrunDisplayView } from './view';
@@ -39,6 +47,34 @@ export default function SpeedrunDisplay({ state, players, deadline }: DisplayPro
   const { item, itemIndex, itemCount, answered, expected, reveal, step } = state;
 
   const counter = itemIndex >= 0 ? `${itemIndex + 1} / ${itemCount}` : null;
+
+  /**
+   * **The opening pair.** This is the format whose rules card earns the most:
+   * the screen it is about to show is the warmup's, deliberately, and a room
+   * that has not been told the scoring changed will play it like the warmup and
+   * find out on the first reveal. So the card says the one thing that is
+   * different and nothing else.
+   *
+   * **`winners` is not on the frame here**, which is why the sentence is vaguer
+   * than Match-3's: it lives inside `reveal`, and `reveal` is null until the
+   * first answer step. That is right — it is a reveal field — so the card says
+   * "the fastest few" and the podium says how many.
+   *
+   * Neither step is in the server's plan yet: `SpeedrunStep` has no `rules` and
+   * no `countdown`, hence the kit's widened ids rather than literals.
+   */
+  if (step === RULES_STEP) {
+    return (
+      <GameRules title="Speedrun">
+        <p>Same four answers. Same clock.</p>
+        <p>But right is no longer enough — only the fastest few correct answers score at all.</p>
+      </GameRules>
+    );
+  }
+
+  if (step === COUNTDOWN_STEP) {
+    return <Countdown deadline={deadline} />;
+  }
 
   if (!item) {
     return (

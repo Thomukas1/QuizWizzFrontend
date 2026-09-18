@@ -5,6 +5,11 @@
     "lib": ["ES2023"],
     "module": "ESNext",
     "skipLibCheck": true,
+    /* vite.config.ts runs in Node, not a browser: URL and friends come from
+       @types/node, which must be a declared devDependency. It used to arrive
+       by accident as vite's optional peer, which npm skipped on a clean CI
+       install — a green local build and a red one on Vercel. */
+    "types": ["node"],
 
     /* Bundler mode */
     "moduleResolution": "Bundler",

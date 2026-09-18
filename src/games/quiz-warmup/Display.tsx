@@ -2,6 +2,7 @@ import { Timer } from '../../components/Timer';
 import {
   COUNTDOWN_STEP,
   Countdown,
+  ExplainNote,
   GameRules,
   LockedInCount,
   MediaStrip,
@@ -103,9 +104,10 @@ export default function WarmupDisplay({ state, players, deadline }: DisplayProps
         <OptionGrid options={item.options} correct={reveal?.correct ?? null} />
 
         {/* Directly under the choices, because it is about the one that just
-            turned green. Only when the item has a sentence — a missing
-            explanation is not a blank line. */}
-        {reveal?.explain && <p className="quiz-display__explain">{reveal.explain}</p>}
+            turned green. The component renders nothing when the item has
+            neither a sentence nor a picture — a missing explanation is not a
+            blank line — so there is no guard to keep in step here. */}
+        <ExplainNote explain={reveal?.explain ?? null} media={reveal?.explainMedia ?? null} />
       </div>
 
       {/* The footer holds exactly one thing at a time, and which one is the

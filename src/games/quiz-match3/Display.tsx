@@ -1,5 +1,5 @@
 import { Timer } from '../../components/Timer';
-import { Countdown, GameRules } from '../quizkit';
+import { Countdown, ExplainNote, GameRules } from '../quizkit';
 import type { DisplayProps } from '../registry';
 import { BankBurst } from './BankBurst';
 import type { Match3DisplayView } from './view';
@@ -241,13 +241,16 @@ export default function Match3Display({ state, players, deadline }: DisplayProps
           ))}
         </ul>
 
-        {/* Under the one that just went green, and only when the item has a
-            sentence — a missing explanation is not a blank line. Most items do
-            not have one, and the hold works with nothing but the green.
+        {/* Under the one that just went green. Most items have neither a
+            sentence nor a picture, and the hold works with nothing but the
+            green — the component renders nothing in that case.
 
-            The kit's class, not one of this format's: an explanation looks the
-            same wherever it is read out, and warmup got there first. */}
-        {revealed?.explain && <p className="quiz-display__explain">{revealed.explain}</p>}
+            The kit's component, not one of this format's: an explanation looks
+            the same wherever it is read out, and warmup got there first. The
+            five-second hold is the shortest of the three, which is what makes a
+            picture worth more here than a sentence and why the server ships one
+            image rather than a strip. */}
+        <ExplainNote explain={revealed?.explain ?? null} media={revealed?.explainMedia ?? null} />
       </div>
     </div>
   );

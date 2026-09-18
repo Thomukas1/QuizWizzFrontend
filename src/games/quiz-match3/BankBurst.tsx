@@ -13,10 +13,11 @@ import type { PublicPlayer } from '../../services/quizwizz';
  * update per burst, one sweep for all of them, and nothing animated but
  * `transform` and `opacity`. What changes is what a particle is and what it is
  * for. A reaction is ambient: small, slow, forty at a time, drifting. This is a
- * payout: **five faces the size of a fist, all at once, gone in a second.**
+ * payout: **five faces the size of a fist, all at once, and they stop where you
+ * can see them.**
  *
  * The point is the wanting. Somebody who has not banked yet watches three people
- * they know fly up the screen with a `+1` on them.
+ * they know hang in the middle of the screen with a `+1` on them.
  *
  * **This used to fire over a live item**, and the note here used to say that not
  * being allowed to stop and admire it was the whole trick. It now lands on the
@@ -60,15 +61,50 @@ import type { PublicPlayer } from '../../services/quizwizz';
 const MAX_FACES = 24;
 
 /**
- * **Two and a half seconds, bottom of the screen to gone.**
+ * **Up, stop, out.** Five seconds in three phases, and the middle one is the
+ * whole reason for the other two.
  *
- * It was one, which crossed a television fast enough that a face was a blur with
- * a number on it — and the whole point is that the room recognises who it was.
- * Randomised per face so a burst doesn't move as one slab, but only just: the
- * brief is still that they arrive together, so this range is narrow where the
- * emoji field's is wide.
+ * It was a single continuous rise — two and a half seconds of never stopping —
+ * and a face crossing a television at a constant speed is a thing you notice
+ * rather than a person you recognise. Reading a name off something still moving
+ * takes longer than the moving thing gives you. So the climb is quick, the face
+ * then **parks near the middle of the screen for three seconds** where the room
+ * can actually land on it, and only then leaves.
+ *
+ * The hold is not a freeze: `bank-noise` keeps the card drifting and turning
+ * under it (see `.bank-burst__bob`), because something perfectly still for three
+ * seconds stops being an event and starts being a decal.
+ *
+ * Fixed rather than randomised per face, unlike the old rise: the three phases
+ * are keyframe stops at 20% and 80% of this total, so a per-face duration would
+ * stretch or squash the hold along with everything else. The variation lives in
+ * the column, the hover height, the drift, the tilt and the wobble instead —
+ * none of which change *when* the linger is.
+ *
+ * **Five seconds is the `hold`'s own length** (`view.ts`, the step table), so the
+ * burst now fills that step end to end instead of finishing in the first half of
+ * it — the last face leaves the top of the screen as the next item opens. If the
+ * server ever shortens the hold, this is what has to come down with it.
  */
-const RISE_MS = { min: 2350, max: 2650 };
+const RISE_MS = 1000;
+const HOVER_MS = 3000;
+const EXIT_MS = 1000;
+/** **Keep `bank-fly`'s 20% / 80% stops in step with these.** They are this split. */
+const FLIGHT_MS = RISE_MS + HOVER_MS + EXIT_MS;
+
+/**
+ * Where a face parks, in `vh` above its launch line. Jittered so a burst holds
+ * as a loose cluster around the middle of the television rather than a row.
+ */
+const HOVER_VH = { min: 30, max: 38 };
+
+/**
+ * The wobble during the hold — period, and how far it carries. Small: this is
+ * meant to read as a card floating, not as a card struggling. Each face gets its
+ * own period and a **negative** start offset, so twenty of them are never in
+ * phase and none of them begins at rest.
+ */
+const NOISE_MS = { min: 1600, max: 2600 };
 
 /**
  * **The stagger.** They leave together and then spread out, which is what makes
@@ -96,21 +132,28 @@ const FACE_PX = 68;
 interface Face {
   id: number;
   player: PublicPlayer;
+  /** The flight — up, hold, out. Carried by `.bank-burst__face`. */
   style: CSSProperties;
+  /** The wobble, on its own element so the two transforms compose instead of fighting. */
+  noise: CSSProperties;
   expiresAt: number;
 }
 
 let nextId = 0;
 
+/** `-1` or `1`, so an amplitude can lean either way without a zero in the middle. */
+function sign() {
+  return Math.random() < 0.5 ? -1 : 1;
+}
+
 function makeFace(player: PublicPlayer, now: number): Face {
-  const rise = RISE_MS.min + Math.random() * (RISE_MS.max - RISE_MS.min);
   const delay = Math.round(Math.random() * STAGGER_MS);
   return {
     id: nextId++,
     player,
     // The delay counts: a face swept while it is still waiting to start would
     // never leave the bottom of the screen.
-    expiresAt: now + rise + delay,
+    expiresAt: now + FLIGHT_MS + delay,
     style: {
       /**
        * The spawn column, across the game zone's own 60% band rather than the
@@ -119,7 +162,9 @@ function makeFace(player: PublicPlayer, now: number): Face {
        * doing something.
        */
       left: `${24 + Math.random() * 52}%`,
-      '--rise': `${Math.round(rise)}ms`,
+      '--flight': `${FLIGHT_MS}ms`,
+      // Where it stops. The jitter is what keeps a burst from parking as a row.
+      '--hover': `${Math.round(HOVER_VH.min + Math.random() * (HOVER_VH.max - HOVER_VH.min))}vh`,
       // A little sideways and a little crooked. Two faces on the same column
       // with the same tilt read as one sprite drawn twice.
       '--drift': `${Math.round(-60 + Math.random() * 120)}px`,
@@ -130,6 +175,15 @@ function makeFace(player: PublicPlayer, now: number): Face {
        * same people at the front of every burst all evening.
        */
       animationDelay: `${delay}ms`,
+    } as CSSProperties,
+    noise: {
+      '--noise': `${Math.round(NOISE_MS.min + Math.random() * (NOISE_MS.max - NOISE_MS.min))}ms`,
+      '--noise-x': `${Math.round(sign() * (10 + Math.random() * 8))}px`,
+      '--noise-y': `${Math.round(sign() * (8 + Math.random() * 6))}px`,
+      '--noise-r': `${(sign() * (3 + Math.random() * 4)).toFixed(1)}deg`,
+      // Negative, so the face is already mid-wobble on its first painted frame
+      // and no two of them are at the same point in the cycle.
+      animationDelay: `-${Math.round(Math.random() * NOISE_MS.max)}ms`,
     } as CSSProperties,
   };
 }
@@ -213,13 +267,18 @@ export function BankBurst({ banked, settledIndex, points, players }: BankBurstPr
     >
       {faces.map(face => (
         <div key={face.id} className="bank-burst__face" style={face.style}>
-          <span className="bank-burst__tile">
-            <Avatar avatar={face.player.avatar} size={FACE_PX} seed={face.player.id} />
-            {/* Upper right, where a payout has landed in every game that ever
-                paid one out — and the same corner `<CrowdCircle>` puts it in. */}
-            <span className="bank-burst__points">+{points}</span>
+          {/* The wobble's own element. Two animations cannot share `transform`
+              on one node — the second would replace the flight rather than add
+              to it — so the journey is the parent and the noise is the child. */}
+          <span className="bank-burst__bob" style={face.noise}>
+            <span className="bank-burst__tile">
+              <Avatar avatar={face.player.avatar} size={FACE_PX} seed={face.player.id} />
+              {/* Upper right, where a payout has landed in every game that ever
+                  paid one out — and the same corner `<CrowdCircle>` puts it in. */}
+              <span className="bank-burst__points">+{points}</span>
+            </span>
+            <span className="bank-burst__name">{face.player.name}</span>
           </span>
-          <span className="bank-burst__name">{face.player.name}</span>
         </div>
       ))}
     </div>,

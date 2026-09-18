@@ -2,6 +2,7 @@ import { Timer } from '../../components/Timer';
 import {
   COUNTDOWN_STEP,
   Countdown,
+  ExplainNote,
   GameRules,
   LockedInCount,
   MediaStrip,
@@ -127,7 +128,10 @@ export default function SpeedrunDisplay({ state, players, deadline }: DisplayPro
             withhold. */}
         <OptionGrid options={item.options} correct={reveal?.correct ?? null} />
 
-        {reveal?.explain && <p className="quiz-display__explain">{reveal.explain}</p>}
+        {/* Only ever seen on `answer`: the ring takes the whole screen from
+            `crowd` on, so the branch above has already returned by the time
+            the frame is still carrying these. */}
+        <ExplainNote explain={reveal?.explain ?? null} media={reveal?.explainMedia ?? null} />
       </div>
 
       <footer className="quiz-display__foot">

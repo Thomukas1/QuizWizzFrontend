@@ -10,7 +10,7 @@
  * shown it yet. A client that renders everything it is handed renders the format
  * correctly.
  */
-import { QuizCounts, QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
+import { QuizCounts, QuizDisplayBase, QuizMedia, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
 
 /**
  * ```
@@ -65,6 +65,8 @@ export interface SpeedrunReveal {
     correct: string;
     /** Read out when the answer needs a sentence. Null when it doesn't. */
     explain: string | null;
+    /** One picture beside that sentence. Null on almost every item. */
+    explainMedia: QuizMedia | null;
     /** Every option key, zeroes included — a bar of height zero, not a missing bar. */
     counts: QuizCounts;
     /**

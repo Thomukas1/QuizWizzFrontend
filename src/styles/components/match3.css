@@ -185,7 +185,10 @@
 
 /* ── The hold at the end ────────────────────────────────────────────────────
    Two and a half seconds on the card layout above, and the only thing it is
-   for is the last item's `+1` getting off the top of the screen. The format's
+   for is the last item's `+1` being watched. The burst outlasts it now — five
+   seconds against this two and a half — but it is portalled to `<body>` and
+   fixed to the viewport, so the last faces simply finish their flight over
+   whatever comes next rather than being cut off by it. The format's
    own ranked card used to live here and was a second scoreboard a beat before
    the real one; `RESULTS` ranks the same room by the points the evening is
    played in, which is the number that matters. */
@@ -225,19 +228,42 @@
 
 .bank-burst__face {
   position: absolute;
-  /* Launched from where the grid is, so the face reads as coming off its own
-     tile — which is emptying at this exact moment, three rows down. */
+  /* The launch line, level with the grid, so the face reads as coming off its
+     own tile — which is emptying at this exact moment, three rows down. It
+     starts *below* this, off the bottom of the screen; `bank-fly`'s 0% is what
+     puts it there. */
   bottom: 12vh;
+  width: calc(var(--burst-face) * 1.8);
+  margin-left: calc(var(--burst-face) * -0.9);
+  will-change: transform;
+  /* `linear`, because each phase sets its own easing inside the keyframes — one
+     curve stretched over up-hold-out would eat the stop in the middle.
+     `both`, not `forwards`: the stagger is a delay, and without a backwards
+     fill a face would sit parked on the launch line, fully opaque, until its
+     turn came. */
+  animation: bank-fly var(--flight) linear both;
+}
+
+/* **The three seconds of standing still, made not-still.** A card frozen in the
+   middle of a television reads as a decal somebody left on the screen; the same
+   card breathing reads as a thing that is happening. It runs for the whole
+   flight rather than just the hold — the amplitude is small enough that it only
+   loosens the climb, and switching it on mid-animation would need a second
+   timer per face. */
+.bank-burst__bob {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  width: calc(var(--burst-face) * 1.8);
-  margin-left: calc(var(--burst-face) * -0.9);
   will-change: transform;
-  animation: bank-fly var(--rise) cubic-bezier(0.22, 0.6, 0.35, 1) forwards;
-  /* Static, never animated. It is what keeps a face legible while it crosses
-     the leaderboard, which is a flat panel of roughly the same value. */
+  animation: bank-noise var(--noise) ease-in-out infinite;
+  /* Static, never animated. It is what keeps a face legible while it crosses the
+     leaderboard, which is a flat panel of roughly the same value.
+
+     It sits on this element rather than on `.bank-burst__face` because a filter
+     on the *ancestor* of a moving thing has to be re-rasterised every frame,
+     twenty-four times over. On the moving element itself it is drawn once and
+     then carried by the compositor. */
   filter: drop-shadow(0 6px 18px rgba(5, 22, 72, 0.75));
 }
 
@@ -280,30 +306,97 @@
   white-space: nowrap;
 }
 
-/* **Up and out, and it does not fade.** A reaction fades because it is ambient
-   and there are forty of them; this is five people who just scored, and fading
-   them out halfway up would say the moment was over before it was. They leave
-   the top of the screen at full strength and the viewport's own edge is what
-   takes them.
+/* **Up, hold, out — and it does not fade.** A reaction fades because it is
+   ambient and there are forty of them; this is five people who just scored, and
+   fading them out would say the moment was over before it was. They leave the
+   top of the screen at full strength and the viewport's own edge is what takes
+   them.
+
+   The three phases are the stops below, and they are a fixed split of
+   `--flight` — **20% up, 60% holding, 20% away**, which is one second, three,
+   and one of the five. `BankBurst.tsx` owns the numbers (`RISE_MS`, `HOVER_MS`,
+   `EXIT_MS`); change them there and these percentages have to follow.
+
+   Each phase carries its own `animation-timing-function`, which is why the
+   element animates `linear`: a rise that decelerates into the hold, then a
+   launch that accelerates out of it. One curve across the whole thing would
+   have the face creeping through its own pause.
 
    Every keyframe carries the same three functions in the same order, so the
    list interpolates function by function instead of collapsing to a matrix —
    which is what keeps the pop from also spinning. */
 @keyframes bank-fly {
+  /* Below the screen, small. Nothing appears out of the middle of a television;
+     it comes up off the grid. */
   0% {
-    transform: translate3d(0, 10%, 0) rotate(0deg) scale(0.35);
+    transform: translate3d(0, 34vh, 0) rotate(calc(var(--tilt) * -0.5)) scale(0.6);
     opacity: 0;
+    animation-timing-function: cubic-bezier(0.16, 0.85, 0.3, 1);
   }
-  /* The pop. Fast, and at full size — this is the acknowledgement. */
-  12% {
-    transform: translate3d(calc(var(--drift) * 0.12), calc(var(--burst-travel) * -0.08), 0)
-      rotate(calc(var(--tilt) * 0.4)) scale(1.12);
+  /* Visible the moment it is on screen — the fade-in happens under the bottom
+     edge, so what the room sees is a face already arriving. */
+  5% {
+    transform: translate3d(0, 22vh, 0) rotate(calc(var(--tilt) * -0.35)) scale(0.8);
     opacity: 1;
+    animation-timing-function: cubic-bezier(0.16, 0.85, 0.3, 1);
+  }
+  /* The overshoot, just past the parking height and just over full size. It is
+     what makes the stop read as a landing rather than a stall. */
+  17% {
+    transform: translate3d(calc(var(--drift) * 0.1), calc(var(--hover) * -1.07), 0)
+      rotate(calc(var(--tilt) * 0.2)) scale(1.1);
+    opacity: 1;
+    animation-timing-function: ease-out;
+  }
+  /* Parked. 20% → 80% is the three seconds, and nothing in this animation moves
+     across it — `bank-noise` on `.bank-burst__bob` is the only thing alive. */
+  20% {
+    transform: translate3d(calc(var(--drift) * 0.12), calc(var(--hover) * -1), 0)
+      rotate(calc(var(--tilt) * 0.25)) scale(1);
+    opacity: 1;
+    animation-timing-function: linear;
+  }
+  80% {
+    transform: translate3d(calc(var(--drift) * 0.12), calc(var(--hover) * -1), 0)
+      rotate(calc(var(--tilt) * 0.25)) scale(1);
+    opacity: 1;
+    /* Away. Slow off the mark and gone by the end — a face that left the hold at
+       full speed would look cut rather than launched. */
+    animation-timing-function: cubic-bezier(0.5, 0, 0.75, 0.4);
   }
   100% {
     transform: translate3d(var(--drift), calc(var(--burst-travel) * -1), 0)
       rotate(var(--tilt)) scale(1);
     opacity: 1;
+  }
+}
+
+/* The wobble. Five uneven stops rather than a two-stop `alternate`, because a
+   pendulum on a fixed period reads as a mechanism; the offsets and the
+   amplitudes are picked per face in `BankBurst.tsx` so twenty of these never
+   agree with each other. It returns to 0 at 100% so the loop does not jump. */
+@keyframes bank-noise {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  18% {
+    transform: translate3d(calc(var(--noise-x) * 0.6), calc(var(--noise-y) * -0.85), 0)
+      rotate(calc(var(--noise-r) * 0.5));
+  }
+  37% {
+    transform: translate3d(calc(var(--noise-x) * -0.9), calc(var(--noise-y) * 0.35), 0)
+      rotate(calc(var(--noise-r) * -0.85));
+  }
+  58% {
+    transform: translate3d(calc(var(--noise-x) * 0.25), calc(var(--noise-y) * 0.9), 0)
+      rotate(calc(var(--noise-r) * 0.9));
+  }
+  79% {
+    transform: translate3d(calc(var(--noise-x) * -0.55), calc(var(--noise-y) * -0.45), 0)
+      rotate(calc(var(--noise-r) * -0.3));
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
 }
 
@@ -561,10 +654,17 @@
     opacity: 1;
   }
 
-  /* The faces still fly, because the burst *is* the information — but once,
-     gently, and in place rather than across the whole television. */
+  /* The faces still appear, because the burst *is* the information — but in
+     place rather than across the whole television. They keep the full
+     `--flight`, so the three seconds of being readable survive; it is the
+     travelling that is dropped, not the time. */
   .bank-burst__face {
-    animation: bank-still 900ms ease-out forwards;
+    animation: bank-still var(--flight) linear both;
+  }
+
+  /* Nothing floats. The hold is a hold. */
+  .bank-burst__bob {
+    animation: none;
   }
 
   .match3-flash {
@@ -572,9 +672,11 @@
   }
 }
 
+/* The same three phases as `bank-fly`, spent on opacity instead of distance:
+   in over the first fifth, held for three fifths, out over the last. */
 @keyframes bank-still {
-  0%   { transform: scale(0.8); opacity: 0; }
+  0%   { transform: scale(0.9); opacity: 0; }
   20%  { transform: scale(1);   opacity: 1; }
-  70%  { transform: scale(1);   opacity: 1; }
+  80%  { transform: scale(1);   opacity: 1; }
   100% { transform: scale(1);   opacity: 0; }
 }

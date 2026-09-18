@@ -39,7 +39,7 @@ import type { PopularityPhase, PopularityPlayerView } from './view';
 /** Copy, which belongs to this side. Two sentences, and they are the format. */
 const ASK: Record<PopularityPhase, { title: string; note: string }> = {
   opinion: { title: 'What do you think?', note: 'Honestly. This one is worth nothing.' },
-  prediction: { title: 'What did the room think?', note: 'Guess the most popular for a point.' },
+  prediction: { title: 'What did the room think?', note: 'Guess the most popular for 2 points.' },
 };
 
 export default function PopularityPlayer({ state, deadline, answer }: PlayerProps<PopularityPlayerView>) {

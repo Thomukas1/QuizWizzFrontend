@@ -50,16 +50,27 @@ import type { GameRef, GameRun, HostCommand, Phase } from '../../services/quizwi
  */
 const PLAYLIST: { gameId: string; title: string; config?: Record<string, unknown> }[] = [
   // { gameId: 'quiz-warmup', title: 'Warmup' },
-  // { gameId: 'quiz-speedrun', title: 'Speedrun' },
   /**
-   * The content id is the server's own default, named here because it is this
-   * entry's handle: an evening's three Match-3 rounds are three of these rows
-   * with three `content` files, and a run-through that doesn't want a hundred
-   * seconds of barrage swaps in a short one **here** rather than fighting
-   * `FAST_CONFIG` — an entry's own config goes over the dev override, so this is
-   * the key that always wins.
+   * **Two Match-3 rounds, and the `content` id is the only thing that differs.**
+   * The format is written to be run more than once an evening — the barrage is
+   * one topic, so a second topic is a second row rather than a longer file — and
+   * they sit either side of the speedrun so the room never takes two barrages
+   * back to back.
+   *
+   * Naming the id here is what makes that possible: it is the entry's handle,
+   * and a run-through that doesn't want a hundred seconds of barrage swaps in a
+   * short file **here** rather than fighting `FAST_CONFIG` — an entry's own
+   * config goes over the dev override, so this is the key that always wins.
+   *
+   * `title` is this side's own label for the lobby's first entry. From `RESULTS`
+   * onwards the server's `upNext.title` takes over, and that is the *module's*
+   * title — so both of these announce themselves as "Match-3" on the night,
+   * which is what the room should hear. The topic is the content file's `title`
+   * and lands on the round's own card.
    */
-  // { gameId: 'quiz-match3', title: 'Match-3', config: { content: 'match3-01' } },
+  { gameId: 'quiz-match3', title: 'Match-3 · Eurovizija', config: { content: 'match3-eurovizija' } },
+  { gameId: 'quiz-speedrun', title: 'Speedrun' },
+  { gameId: 'quiz-match3', title: 'Match-3 · Pokemonai', config: { content: 'match3-pokemonai' } },
   /**
    * The recovery round, and the one to end on. It is the slowest format in the
    * set — two questions per item — so four to six items is a round, and the

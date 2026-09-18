@@ -11,7 +11,7 @@
  * follows the same rule for the same reason: the correct answer is not on the
  * frame at all until the buttons are dead.
  */
-import { QuizDisplayBase, QuizOption, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
+import { QuizDisplayBase, QuizMedia, QuizOption, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
 
 /**
  * ```
@@ -97,6 +97,14 @@ export interface Match3Hold {
     correct: string;
     /** The item's sentence, read out under it. Null for most items, and that is fine. */
     explain: string | null;
+    /**
+     * One picture beside that sentence. Null for most items, and that is fine.
+     *
+     * The tightest hold in the four formats — five seconds — so this is the item
+     * whose answer is a thing rather than a fact: the album cover, the face. A
+     * screen nobody has time to read is worse than no screen.
+     */
+    explainMedia: QuizMedia | null;
 }
 
 export interface Match3DisplayView extends QuizDisplayBase {

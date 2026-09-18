@@ -27,6 +27,7 @@ export { Countdown, COUNTDOWN_STEP } from './Countdown';
 export { OptionButtons } from './OptionButtons';
 export { OptionGrid } from './OptionGrid';
 export { MediaStrip } from './MediaStrip';
+export { ExplainNote } from './ExplainNote';
 export { LockedInCount } from './LockedInCount';
 export { ScorerRoll } from './ScorerRoll';
 export { ScorePanel } from './ScorePanel';

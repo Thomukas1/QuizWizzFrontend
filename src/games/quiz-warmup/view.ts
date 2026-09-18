@@ -5,7 +5,7 @@
  * `view.ts`, so the two halves of `quiz-warmup` describe themselves with one
  * set of types. The frontend's folder for this game is the mirror of this one.
  */
-import { QuizCounts, QuizDisplayBase, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
+import { QuizCounts, QuizDisplayBase, QuizMedia, QuizOutcome, QuizPlayerBase } from '../quizkit/view';
 
 /**
  * ```
@@ -36,6 +36,8 @@ export interface WarmupReveal {
     correct: string;
     /** Read out when the answer needs a sentence. Null when it doesn't. */
     explain: string | null;
+    /** One picture beside that sentence. Null on almost every item. */
+    explainMedia: QuizMedia | null;
     /** Every option key, zeroes included — a bar of height zero, not a missing bar. */
     counts: QuizCounts;
     /** Who scores. One `+1` flyup per tile. */

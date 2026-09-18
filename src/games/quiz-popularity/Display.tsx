@@ -49,7 +49,7 @@ import type { PopularityDisplayView, PopularityPhase } from './view';
 /** What the television calls each half. Copy, and copy belongs to this side. */
 const ASK: Record<PopularityPhase, { kicker: string; hint: string }> = {
   opinion: { kicker: 'Pick honestly', hint: 'No points. Nobody sees this.' },
-  prediction: { kicker: 'Now — what did the room pick?', hint: 'Guess the winner for a point.' },
+  prediction: { kicker: 'Now — what did the room pick?', hint: 'Guess the winner for 2 points.' },
 };
 
 export default function PopularityDisplay({ state, players, deadline }: DisplayProps<PopularityDisplayView>) {

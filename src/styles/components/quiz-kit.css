@@ -148,6 +148,46 @@
   color: var(--text-soft);
 }
 
+/* The sentence and the picture that goes with it, as one block.
+
+   A row rather than a stack: the reveal is the most crowded band on the screen
+   — a correct answer, bars, faces — and stacking an image over the sentence
+   pushes all of that up on the one screen with the least room to give it. Side
+   by side, the picture is taken in at a glance while the sentence is read out
+   loud, which is how the pair is actually used.
+
+   It wraps, because the picture keeps its aspect ratio and a long explanation
+   beside it would otherwise be squeezed into a column of single words. */
+.quiz-explain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(var(--space-md), 1.6vw, var(--space-2xl));
+  min-height: 0;
+}
+
+/* Deliberately smaller than `.media-strip__frame`, which is the prompt's slot
+   and the subject of its own screen. This one is a footnote to an answer that
+   has already landed, so it is sized to sit beside a line of text rather than
+   to take the band. `vh` rather than `vw`: what it competes with is everything
+   above and below it. */
+.quiz-explain__media {
+  flex: 0 0 auto;
+  height: clamp(88px, 15vh, 210px);
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+}
+
+/* A picture that needs no sentence — the album cover, the face, the map — is
+   the subject rather than the footnote, so it takes the room the sentence would
+   have had. */
+.quiz-explain--media-only .quiz-explain__media {
+  height: clamp(120px, 24vh, 320px);
+}
+
 /* ── The opening: a card, then 3 · 2 · 1 ────────────────────────────────────
    Every format opens the same way — a held frame naming it and explaining it,
    then three seconds of starting gun, then the first question. Match-3 had both
